@@ -13,6 +13,9 @@ var specifications = new (string Name, Func<Task> Run)[]
     ("STAP-A packets emit every aggregated unit", StapAEmitsAggregatedUnits),
     ("FU-A packets are reassembled", FuAIsReassembled),
     ("FU-A sequence gaps discard partial units", FuASequenceGapIsDiscarded),
+    ("access units group NALs and inject cached parameter sets", AccessUnitsGroupAndInjectParameterSets),
+    ("access-unit timestamps handle RTP wraparound", AccessUnitTimestampsHandleWraparound),
+    ("access-unit assembly is bounded and recovers", AccessUnitAssemblyIsBounded),
     ("SDP parser discovers the H264 video track", SdpParserDiscoversH264Track),
     ("RTSP wire reader separates responses and interleaved frames", RtspWireReaderSeparatesFrames),
     ("digest authentication does not disclose the access code", DigestAuthenticationDoesNotDiscloseAccessCode),
@@ -115,6 +118,64 @@ static Task FuASequenceGapIsDiscarded()
     var depacketizer = new H264RtpDepacketizer();
     _ = depacketizer.Push(ParseRtp(40, 88, false, [0x7c, 0x85, 0x11]));
     AssertEx.Equal(0, depacketizer.Push(ParseRtp(42, 88, true, [0x7c, 0x45, 0x22])).Count);
+    return Task.CompletedTask;
+}
+
+static Task AccessUnitsGroupAndInjectParameterSets()
+{
+    var assembler = new H264AccessUnitAssembler(
+        90_000,
+        1024,
+        16,
+        new byte[] { 0x67, 0x01 },
+        new byte[] { 0x68, 0x02 });
+    AssertEx.Equal<H264AccessUnit?>(null, assembler.Push(CreateNal(100, 10, false, [0x06, 0x03])));
+    var accessUnit = assembler.Push(CreateNal(100, 11, true, [0x65, 0x04]));
+    AssertEx.True(accessUnit is not null);
+    AssertEx.SequenceEqual(
+        new byte[]
+        {
+            0, 0, 0, 1, 0x67, 0x01,
+            0, 0, 0, 1, 0x68, 0x02,
+            0, 0, 0, 1, 0x06, 0x03,
+            0, 0, 0, 1, 0x65, 0x04
+        },
+        accessUnit!.AnnexBData.Span);
+    AssertEx.True(accessUnit.IsKeyFrame);
+    AssertEx.True(accessUnit.HasSequenceParameterSet);
+    AssertEx.True(accessUnit.HasPictureParameterSet);
+    AssertEx.True(accessUnit.Discontinuity);
+    AssertEx.Equal(4, accessUnit.NalUnitCount);
+
+    var following = assembler.Push(CreateNal(90_100, 12, true, [0x61, 0x05]));
+    AssertEx.True(following is not null);
+    AssertEx.Equal(TimeSpan.FromSeconds(1), following!.PresentationTime);
+    AssertEx.False(following.Discontinuity);
+    return Task.CompletedTask;
+}
+
+static Task AccessUnitTimestampsHandleWraparound()
+{
+    var assembler = new H264AccessUnitAssembler(90_000, 1024, 16, Array.Empty<byte>(), Array.Empty<byte>());
+    var first = assembler.Push(CreateNal(uint.MaxValue - 44, 1, true, [0x61, 0x01]));
+    var second = assembler.Push(CreateNal(45, 2, true, [0x61, 0x02]));
+    AssertEx.True(first is not null);
+    AssertEx.True(second is not null);
+    AssertEx.Equal(TimeSpan.Zero, first!.PresentationTime);
+    AssertEx.Equal(TimeSpan.FromMilliseconds(1), second!.PresentationTime);
+    return Task.CompletedTask;
+}
+
+static Task AccessUnitAssemblyIsBounded()
+{
+    var assembler = new H264AccessUnitAssembler(90_000, 12, 2, Array.Empty<byte>(), Array.Empty<byte>());
+    AssertEx.Equal<H264AccessUnit?>(null, assembler.Push(CreateNal(10, 1, false, [0x61, 1, 2, 3])));
+    AssertEx.Equal<H264AccessUnit?>(null, assembler.Push(CreateNal(10, 2, true, [0x61, 4, 5, 6])));
+
+    var recovered = assembler.Push(CreateNal(20, 3, true, [0x61, 7]));
+    AssertEx.True(recovered is not null);
+    AssertEx.True(recovered!.Discontinuity);
+    AssertEx.SequenceEqual(new byte[] { 0, 0, 0, 1, 0x61, 7 }, recovered.AnnexBData.Span);
     return Task.CompletedTask;
 }
 
@@ -431,6 +492,11 @@ static RtpPacket ParseRtp(ushort sequence, uint timestamp, bool marker, byte[] p
     var bytes = CreateRtpPacketBytes(sequence, timestamp, marker, payload);
     AssertEx.True(RtpPacket.TryParse(bytes, out var packet));
     return packet;
+}
+
+static H264NalUnit CreateNal(uint timestamp, ushort sequence, bool marker, byte[] payload)
+{
+    return new H264NalUnit([0, 0, 0, 1, .. payload], timestamp, sequence, marker);
 }
 
 static byte[] CreateRtpPacketBytes(ushort sequence, uint timestamp, bool marker, byte[] payload)

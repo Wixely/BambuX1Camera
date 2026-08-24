@@ -52,7 +52,7 @@ var options = new X1CameraOptions(settings.Host, settings.AccessCode)
     PinnedCertificateSha256 = settings.CertificateSha256
 };
 
-var units = 0L;
+var accessUnits = 0L;
 X1CameraSession? cameraSession = null;
 try
 {
@@ -67,17 +67,19 @@ try
         : string.Empty;
     Console.WriteLine($"Connected: payload={cameraSession.PayloadType}, clock={cameraSession.ClockRate}{timeoutText}.");
     Console.WriteLine(commandLine.Duration is null ? "Press Ctrl+C to stop." : $"Testing for {commandLine.Duration.Value.TotalSeconds:0} seconds.");
-    await foreach (var unit in cameraSession.ReadNalUnitsAsync(cancellation.Token))
+    await foreach (var accessUnit in cameraSession.ReadAccessUnitsAsync(cancellation.Token))
     {
-        units++;
+        accessUnits++;
         if (output is not null)
         {
-            await output.WriteAsync(unit.AnnexBData, cancellation.Token);
+            await output.WriteAsync(accessUnit.AnnexBData, cancellation.Token);
         }
 
-        if (unit.IsKeyFrame || units % 300 == 0)
+        if (accessUnit.IsKeyFrame || accessUnits % 300 == 0)
         {
-            Console.WriteLine($"NAL units: {units}; last type: {unit.Type}; RTP timestamp: {unit.RtpTimestamp}");
+            Console.WriteLine(
+                $"Access units: {accessUnits}; keyframe: {accessUnit.IsKeyFrame}; " +
+                $"NALs: {accessUnit.NalUnitCount}; presentation time: {accessUnit.PresentationTime}");
         }
     }
 }
@@ -92,7 +94,7 @@ catch (Exception exception)
 }
 finally
 {
-    Console.WriteLine($"NAL units received: {units}.");
+    Console.WriteLine($"Access units received: {accessUnits}.");
     if (cameraSession is not null)
     {
         var metrics = cameraSession.Metrics;

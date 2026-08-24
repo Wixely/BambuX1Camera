@@ -216,56 +216,14 @@ public sealed class X1CameraSession : IAsyncDisposable
     /// <summary>Reads H.264 NAL units until cancellation, disposal, or exhausted reconnection attempts.</summary>
     public async IAsyncEnumerable<H264NalUnit> ReadNalUnitsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref disposed) != 0, this);
-        if (Interlocked.Exchange(ref reading, 1) != 0)
-        {
-            throw new InvalidOperationException("A camera session supports one active reader. Fan out units in the host application.");
-        }
-
+        BeginReading();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
-        var depacketizer = new H264RtpDepacketizer();
-        ushort? lastSequence = null;
         try
         {
-            while (!linked.IsCancellationRequested)
+            await foreach (var item in ReadNalStreamAsync(linked.Token).ConfigureAwait(false))
             {
-                var current = Volatile.Read(ref active);
-                RtspInterleavedFrame frame;
-                try
+                if (item.Unit is { } unit)
                 {
-                    frame = await current.State.Connection.ReadFrameAsync(linked.Token).ConfigureAwait(false);
-                }
-                catch (Exception exception) when (!linked.IsCancellationRequested && IsRecoverable(exception))
-                {
-                    await ReconnectAsync(current, exception, linked.Token).ConfigureAwait(false);
-                    depacketizer = new H264RtpDepacketizer();
-                    lastSequence = null;
-                    continue;
-                }
-
-                Interlocked.Increment(ref interleavedFramesReceived);
-                if (frame.Channel != 0)
-                {
-                    continue;
-                }
-
-                if (!RtpPacket.TryParse(frame.Payload, out var packet))
-                {
-                    Interlocked.Increment(ref malformedRtpPackets);
-                    continue;
-                }
-
-                if (packet.PayloadType != current.State.VideoTrack.PayloadType)
-                {
-                    Interlocked.Increment(ref unexpectedPayloadPackets);
-                    continue;
-                }
-
-                Interlocked.Increment(ref rtpPacketsReceived);
-                TrackSequence(packet.SequenceNumber, ref lastSequence);
-                foreach (var unit in depacketizer.Push(packet))
-                {
-                    Interlocked.Increment(ref nalUnitsEmitted);
                     yield return unit;
                 }
             }
@@ -273,6 +231,120 @@ public sealed class X1CameraSession : IAsyncDisposable
         finally
         {
             Volatile.Write(ref reading, 0);
+        }
+    }
+
+    /// <summary>
+    /// Reads complete encoded H.264 access units. Parameter sets are cached and injected before IDR access units
+    /// when absent, and presentation timestamps account for normal 32-bit RTP wraparound.
+    /// </summary>
+    public async IAsyncEnumerable<H264AccessUnit> ReadAccessUnitsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        BeginReading();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
+        var assembler = CreateAccessUnitAssembler();
+        try
+        {
+            await foreach (var item in ReadNalStreamAsync(linked.Token).ConfigureAwait(false))
+            {
+                if (item.Discontinuity)
+                {
+                    var current = Volatile.Read(ref active).State.VideoTrack;
+                    assembler.Reset(current.ClockRate, current.SequenceParameterSet ?? [], current.PictureParameterSet ?? []);
+                }
+
+                if (item.Unit is { } unit && assembler.Push(unit) is { } accessUnit)
+                {
+                    yield return accessUnit;
+                }
+            }
+        }
+        finally
+        {
+            Volatile.Write(ref reading, 0);
+        }
+    }
+
+    private async IAsyncEnumerable<H264NalStreamItem> ReadNalStreamAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        var depacketizer = new H264RtpDepacketizer();
+        ushort? lastSequence = null;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var current = Volatile.Read(ref active);
+            RtspInterleavedFrame? frame = null;
+            var reconnected = false;
+            try
+            {
+                frame = await current.State.Connection.ReadFrameAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (!cancellationToken.IsCancellationRequested && IsRecoverable(exception))
+            {
+                await ReconnectAsync(current, exception, cancellationToken).ConfigureAwait(false);
+                depacketizer = new H264RtpDepacketizer();
+                lastSequence = null;
+                reconnected = true;
+            }
+
+            if (reconnected)
+            {
+                yield return new H264NalStreamItem(null, true);
+                continue;
+            }
+
+            Interlocked.Increment(ref interleavedFramesReceived);
+            if (frame!.Channel != 0)
+            {
+                continue;
+            }
+
+            if (!RtpPacket.TryParse(frame.Payload, out var packet))
+            {
+                Interlocked.Increment(ref malformedRtpPackets);
+                depacketizer = new H264RtpDepacketizer();
+                yield return new H264NalStreamItem(null, true);
+                continue;
+            }
+
+            if (packet.PayloadType != current.State.VideoTrack.PayloadType)
+            {
+                Interlocked.Increment(ref unexpectedPayloadPackets);
+                continue;
+            }
+
+            Interlocked.Increment(ref rtpPacketsReceived);
+            if (TrackSequence(packet.SequenceNumber, ref lastSequence))
+            {
+                depacketizer = new H264RtpDepacketizer();
+                yield return new H264NalStreamItem(null, true);
+            }
+
+            foreach (var unit in depacketizer.Push(packet))
+            {
+                Interlocked.Increment(ref nalUnitsEmitted);
+                yield return new H264NalStreamItem(unit, false);
+            }
+        }
+    }
+
+    private H264AccessUnitAssembler CreateAccessUnitAssembler()
+    {
+        var track = Volatile.Read(ref active).State.VideoTrack;
+        return new H264AccessUnitAssembler(
+            track.ClockRate,
+            options.MaxAccessUnitBytes,
+            options.MaxNalUnitsPerAccessUnit,
+            track.SequenceParameterSet ?? [],
+            track.PictureParameterSet ?? []);
+    }
+
+    private void BeginReading()
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref disposed) != 0, this);
+        if (Interlocked.Exchange(ref reading, 1) != 0)
+        {
+            throw new InvalidOperationException("A camera session supports one active reader. Fan out units in the host application.");
         }
     }
 
@@ -400,8 +472,9 @@ public sealed class X1CameraSession : IAsyncDisposable
         connection.KeepAliveLifetime.Dispose();
     }
 
-    private void TrackSequence(ushort sequence, ref ushort? lastSequence)
+    private bool TrackSequence(ushort sequence, ref ushort? lastSequence)
     {
+        var discontinuity = false;
         if (lastSequence is { } previous)
         {
             var expected = (ushort)(previous + 1);
@@ -409,14 +482,17 @@ public sealed class X1CameraSession : IAsyncDisposable
             if (forwardDistance is > 0 and < 0x8000)
             {
                 Interlocked.Add(ref missingRtpPackets, forwardDistance);
+                discontinuity = true;
             }
             else if (forwardDistance >= 0x8000)
             {
                 Interlocked.Increment(ref outOfOrderRtpPackets);
+                discontinuity = true;
             }
         }
 
         lastSequence = sequence;
+        return discontinuity;
     }
 
     private TimeSpan GetKeepAliveInterval(TimeSpan? serverTimeout)
@@ -449,4 +525,6 @@ public sealed class X1CameraSession : IAsyncDisposable
 
         public int Closed;
     }
+
+    private readonly record struct H264NalStreamItem(H264NalUnit? Unit, bool Discontinuity);
 }

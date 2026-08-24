@@ -58,6 +58,12 @@ public sealed class X1CameraOptions
     /// <summary>Gets or sets the bounded number of interleaved RTSP frames buffered before new frames are dropped.</summary>
     public int FrameQueueCapacity { get; init; } = 256;
 
+    /// <summary>Gets or sets the maximum encoded size of one assembled H.264 access unit.</summary>
+    public int MaxAccessUnitBytes { get; init; } = 8 * 1024 * 1024;
+
+    /// <summary>Gets or sets the maximum number of NAL units in one assembled H.264 access unit.</summary>
+    public int MaxNalUnitsPerAccessUnit { get; init; } = 1024;
+
     /// <summary>Gets or sets the maximum time allowed for an acknowledged RTSP teardown during disposal.</summary>
     public TimeSpan TeardownTimeout { get; init; } = TimeSpan.FromSeconds(5);
 
@@ -105,6 +111,16 @@ public sealed class X1CameraOptions
         if (FrameQueueCapacity is < 1 or > 4096)
         {
             throw new ArgumentOutOfRangeException(nameof(FrameQueueCapacity));
+        }
+
+        if (MaxAccessUnitBytes is < 1024 or > 64 * 1024 * 1024)
+        {
+            throw new ArgumentOutOfRangeException(nameof(MaxAccessUnitBytes));
+        }
+
+        if (MaxNalUnitsPerAccessUnit is < 1 or > 4096)
+        {
+            throw new ArgumentOutOfRangeException(nameof(MaxNalUnitsPerAccessUnit));
         }
 
         if (TeardownTimeout <= TimeSpan.Zero)

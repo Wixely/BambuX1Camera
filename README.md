@@ -10,11 +10,12 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 
 ## Current status
 
-- Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, and FU-A packet handling.
+- Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, FU-A, and complete access-unit assembly.
 - Uses one RTSP reader to dispatch control responses by `CSeq` while feeding a bounded RTP queue. It acknowledges adaptive `OPTIONS` keepalives and teardown, exposes stream-health metrics, and reconnects established streams with a bounded retry policy.
 - Supports OS certificate validation or a configured SHA-256 certificate pin. The console probe can perform an explicit trust-on-first-use certificate observation without sending credentials, then pin the accepted certificate for the authenticated connection.
 - Includes dependency-free protocol specifications and an interactive console probe that supports timed tests and optional encoded Annex-B capture.
 - A 35-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, six adaptive keepalive acknowledgements, acknowledged teardown, and 901 encoded H.264 NAL units with no observed packet gaps, malformed packets, queue drops, or reconnects. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
+- A subsequent 10-second hardware run validated the access-unit API with 239 complete encoded frames, repeated SPS/PPS-equipped IDR output, normalized presentation times, acknowledged keepalive and teardown, and no observed packet gaps, malformed packets, queue drops, or reconnects.
 - Browser fMP4/WebCodecs delivery, still-image capture, the sample viewer, GitHub publishing, and the host plugin contract are planned next; they are not part of this initial slice.
 
 ## Build and verify
@@ -71,10 +72,16 @@ await foreach (var nalUnit in session.ReadNalUnitsAsync(cancellationToken))
     // nalUnit.AnnexBData remains encoded H.264.
 }
 
+// Alternatively, consume complete encoded frames for a decoder or restreamer.
+await foreach (var accessUnit in session.ReadAccessUnitsAsync(cancellationToken))
+{
+    // accessUnit.AnnexBData includes cached SPS/PPS before IDR frames when needed.
+}
+
 var metrics = session.Metrics;
 ```
 
-Only one reader is permitted per printer session. `Metrics` is a thread-safe snapshot containing packet gaps, malformed or unexpected packets, bounded-queue drops, NAL output, reconnects, and acknowledged lifecycle requests. A plugin host should maintain one connection and fan out bounded copies or references to authorized consumers.
+Only one reader is permitted per printer session, using either the NAL or access-unit API. Access units are bounded, carry normalized presentation time across normal 32-bit RTP wraparound, and flag discontinuities so a decoder or restreamer can reset and wait for a keyframe. `Metrics` is a thread-safe snapshot containing packet gaps, malformed or unexpected packets, bounded-queue drops, NAL output, reconnects, and acknowledged lifecycle requests. A plugin host should maintain one connection and fan out bounded copies or references to authorized consumers.
 
 ## Security
 
