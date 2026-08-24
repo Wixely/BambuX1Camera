@@ -1,0 +1,190 @@
+name: Build and publish packages
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+
+jobs:
+  verify:
+    name: Verify (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2025
+          - ubuntu-24.04
+
+    steps:
+      - name: Check out the tested revision
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $authorization = [Convert]::ToBase64String(
+              [Text.Encoding]::UTF8.GetBytes("x-access-token:$env:GITHUB_TOKEN"))
+
+          git init .
+          git remote add origin "https://github.com/$env:GITHUB_REPOSITORY.git"
+          git -c "http.extraheader=AUTHORIZATION: basic $authorization" `
+              fetch --no-tags --depth=1 origin $env:GITHUB_SHA
+          git checkout --detach --force FETCH_HEAD
+
+      - name: Authenticate package restore
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          dotnet nuget update source github-wixely `
+              --username $env:GITHUB_REPOSITORY_OWNER `
+              --password $env:GITHUB_TOKEN `
+              --store-password-in-clear-text `
+              --configfile NuGet.config
+
+      - name: Build and run protocol specifications
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          dotnet --info
+          dotnet restore BambuX1Camera.slnx
+          dotnet build BambuX1Camera.slnx --configuration Release --no-restore
+          dotnet run `
+              --project tests/BambuLab.X1Camera.Specs/BambuLab.X1Camera.Specs.csproj `
+              --configuration Release `
+              --no-build
+
+  publish:
+    name: Pack, validate, and publish
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out the tagged revision
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $authorization = [Convert]::ToBase64String(
+              [Text.Encoding]::UTF8.GetBytes("x-access-token:$env:GITHUB_TOKEN"))
+
+          git init .
+          git remote add origin "https://github.com/$env:GITHUB_REPOSITORY.git"
+          git -c "http.extraheader=AUTHORIZATION: basic $authorization" `
+              fetch --no-tags --depth=1 origin $env:GITHUB_SHA
+          git checkout --detach --force FETCH_HEAD
+
+      - name: Authenticate package restore
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          dotnet nuget update source github-wixely `
+              --username $env:GITHUB_REPOSITORY_OWNER `
+              --password $env:GITHUB_TOKEN `
+              --store-password-in-clear-text `
+              --configfile NuGet.config
+
+      - name: Pack tagged packages
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $tagVersion = $env:GITHUB_REF_NAME.Substring(1)
+          $projects = @(
+              "src/BambuLab.X1Camera/BambuLab.X1Camera.csproj",
+              "src/BambuLab.X1Camera.Imaging/BambuLab.X1Camera.Imaging.csproj")
+
+          foreach ($projectPath in $projects) {
+              [xml]$project = Get-Content -Raw $projectPath
+              $projectVersion = [string]$project.Project.PropertyGroup.Version
+              if ($projectVersion -ne $tagVersion) {
+                  throw "Tag version $tagVersion does not match $projectPath version $projectVersion."
+              }
+          }
+
+          $packageDirectory = Join-Path $env:GITHUB_WORKSPACE "artifacts/packages"
+          dotnet restore BambuX1Camera.slnx
+          foreach ($projectPath in $projects) {
+              dotnet pack $projectPath `
+                  --configuration Release `
+                  --no-restore `
+                  --output $packageDirectory `
+                  -p:PackageVersion=$tagVersion `
+                  -p:IncludeSymbols=true `
+                  -p:SymbolPackageFormat=snupkg
+          }
+
+      - name: Validate packages in a clean consumer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $tagVersion = $env:GITHUB_REF_NAME.Substring(1)
+          $packageDirectory = Join-Path $env:GITHUB_WORKSPACE "artifacts/packages"
+          $consumerDirectory = Join-Path $env:RUNNER_TEMP "package-consumer"
+
+          dotnet nuget add source $packageDirectory `
+              --name release-candidate `
+              --configfile NuGet.config
+          dotnet new console `
+              --name PackageConsumer `
+              --framework net10.0 `
+              --no-restore `
+              --output $consumerDirectory
+          dotnet add "$consumerDirectory/PackageConsumer.csproj" package `
+              BambuLab.X1Camera.Imaging `
+              --version $tagVersion `
+              --no-restore
+          dotnet restore "$consumerDirectory/PackageConsumer.csproj" `
+              --configfile NuGet.config
+          dotnet build "$consumerDirectory/PackageConsumer.csproj" `
+              --configuration Release `
+              --no-restore
+
+      - name: Publish packages to GitHub Packages
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $packageDirectory = Join-Path $env:GITHUB_WORKSPACE "artifacts/packages"
+          $packages = @(Get-ChildItem $packageDirectory -Filter "*.nupkg" |
+              Where-Object { -not $_.Name.EndsWith(".snupkg") })
+          if ($packages.Count -ne 2) {
+              throw "Expected two NuGet packages, found $($packages.Count)."
+          }
+
+          foreach ($package in $packages) {
+              dotnet nuget push $package.FullName `
+                  --source "https://nuget.pkg.github.com/$env:GITHUB_REPOSITORY_OWNER/index.json" `
+                  --api-key $env:GITHUB_TOKEN `
+                  --skip-duplicate
+          }

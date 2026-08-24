@@ -52,3 +52,14 @@ SkiaSharp and HarfBuzzSharp's .NET bindings are MIT-licensed. The native Google 
 
 The project targets the .NET platform but does not redistribute its source as part of the library package.
 
+## GitHub Actions workflow
+
+- Source: Independently authored repository workflow.
+- Purpose: Windows/Linux verification and tagged NuGet package publishing.
+- External action dependencies: None. The workflow intentionally contains no `uses:` steps.
+- Hosted tools: Git, PowerShell, and the .NET SDK supplied by GitHub-hosted `windows-2025` and `ubuntu-24.04` runner images.
+- License: Project workflow code is released under MIT with the repository.
+- Reviewed: 2026-08-24
+
+The hosted runner operating systems and preinstalled development tools are build infrastructure rather than code, binaries, or dependencies distributed by this project. Package contents are produced only from the audited repository projects and their declared package dependencies.
+
