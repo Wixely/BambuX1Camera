@@ -9,6 +9,13 @@
     <Authors>Wixely</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/Wixely/BambuX1Camera</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Wixely/BambuX1Camera.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>bambu-lab;bambu;x1;camera;h264;png;imaging</PackageTags>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsPackable>true</IsPackable>
   </PropertyGroup>
