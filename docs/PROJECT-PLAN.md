@@ -142,6 +142,7 @@ The viewer should provide:
 - [x] Build the Avalonia connection page with masked input, certificate-pin confirmation, optional encoded settings, and viewer navigation. - Owner: agent
 - [x] Add bounded GOP decoding, RGB24 video display, drop/reconnect status, and PNG capture to the Avalonia viewer. A physical Windows run on 2026-08-24 reached the viewer and displayed decoded video. - Owner: agent
 - [x] Add portable self-contained single-file Windows and Linux publishing and verify graphical startup on Windows and WSLg. - Owner: agent
+- [ ] Investigate whether [CupriFace](https://github.com/Wixely/CupriFace) is a better sample UI than Avalonia and whether the same sample can ship on Android. Build a minimal Windows/Linux/Android camera-viewer spike and compare live-frame rendering performance, controls and accessibility, platform integration, standalone packaging, dependency/licence closure, project maturity, and maintenance cost before changing the current sample. - Owner: TBD
 - [ ] Extract the smallest host-neutral plugin contract after both video and still APIs are proven. - Owner: TBD
 - [ ] Add security, reconnect, malformed-input, and multi-consumer tests. - Owner: TBD
 
