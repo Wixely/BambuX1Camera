@@ -21,7 +21,7 @@ The project and all independently authored code are MIT-licensed. Implementation
 - Produce installable, versioned packages through GitHub Packages.
 - Include a sample viewer application.
 - License the project under MIT.
-- Use only independently authored or MIT-licensed implementation code and dependencies, including the complete transitive dependency graph.
+- Use only independently authored or MIT-licensed implementation code and dependencies, including the complete transitive dependency graph, except for narrowly recorded sample-only renderer exceptions.
 - The diagnostic console probe may optionally save the printer address, access code, and certificate pin as Base64-encoded UTF-8 in ignored JSON beside its executable. Saving must be opt-in and clearly identified as reversible encoding rather than encryption. Confirmed by the user on 2026-08-24.
 
 ## Proposed architecture
@@ -45,7 +45,7 @@ The still-image design keeps decoding in an explicit optional package rather tha
 
 - The Avalonia desktop viewer consumes bounded access units through the optional imaging package and captures a decoded frame as PNG.
 - A library-level `CapturePngAsync` API in the imaging package waits for a complete IDR and returns PNG bytes, timestamp, dimensions, and content type.
-- Headless still capture uses the optional pure-managed H264Sharp decoder package. H264Sharp 1.0.2 has no transitive package dependencies, but its BSD-attributed CABAC table is covered by the temporary user-approved exception recorded in the dependency policy and must be replaced by a corrected release before supported publication.
+- Headless still capture uses the optional pure-managed, MIT-licensed H264Sharp decoder package. Its precautionary OpenH264 attribution for specification-mandated CABAC values is preserved without changing the package's MIT licensing determination.
 - During the hardware spike, check whether the current X1C firmware exposes a usable native still-image path. Prefer it if verified, but do not assume one exists.
 
 ## Proposed deliverables
@@ -74,7 +74,7 @@ Working package name: `BambuLab.X1Camera.Imaging`.
 - `CapturePngAsync` returning a PNG result with timestamp, dimensions, and media type.
 - `X1CameraPngDecoder` for decoding a keyframe supplied by a host-managed fan-out pipeline.
 - An Avalonia-compatible decoded-frame path for the sample viewer.
-- Pure-managed headless decoding through H264Sharp, pending the recorded provenance correction and Linux verification.
+- Pure-managed headless decoding through H264Sharp, verified on Windows and Linux.
 
 ### Plugin boundary
 
@@ -108,7 +108,7 @@ The viewer should provide:
 - Run build and protocol tests on Windows and Linux for every pull request and release candidate.
 - On an approved version tag, build once, retain the packages as workflow artifacts, and publish the exact verified files to GitHub Packages using scoped workflow permissions.
 - Install the published packages into a clean consumer project as a release gate.
-- Do not publish a repository or package until repository and package visibility are explicitly decided, the MIT-only dependency audit passes, and the full pre-push privacy review is complete.
+- Do not publish a repository or package until repository and package visibility are explicitly decided, the dependency-policy audit passes, and the full pre-push privacy review is complete.
 
 ## Milestones
 
@@ -134,8 +134,8 @@ The viewer should provide:
 - [x] Define the PNG still-image result contract and optional imaging-package boundary. - Owner: agent
 - [x] Implement `CapturePngAsync` and `X1CameraPngDecoder` using H264Sharp. A Windows hardware run on 2026-08-24 decoded and visually validated a 1760x1080 frame; the private test image was not retained. - Owner: agent
 - [x] Implement desktop viewer PNG capture through the platform save picker. - Owner: agent
-- [x] Select H264Sharp for headless still capture and audit version 1.0.2. A narrow temporary BSD-table exception was approved by the user on 2026-08-24. - Owner: user and agent
-- [ ] Upgrade to the corrected H264Sharp release and remove the temporary dependency-policy exception. - Owner: user and agent - Review: 2026-09-30
+- [x] Select H264Sharp for headless still capture and audit version 1.0.2 as MIT. Preserve its precautionary BSD attribution for specification-mandated CABAC initialization values. - Owner: user and agent
+- [x] Review the upstream licensing clarification and remove the obsolete temporary-exception language. - Owner: agent
 
 ### 0.4 - Viewer and plugin contract
 

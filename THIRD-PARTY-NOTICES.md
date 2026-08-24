@@ -3,6 +3,7 @@
 ## H264Sharp.Decoder 1.0.2
 
 - Source: <https://github.com/Wixely/H264Sharp/tree/v1.0.2>
+- Current licensing clarification: <https://github.com/Wixely/H264Sharp#licensing>
 - Package source: <https://nuget.pkg.github.com/Wixely/index.json>
 - Package ID: `H264Sharp.Decoder`
 - Version: `1.0.2`
@@ -12,7 +13,7 @@
 - Transitive package dependencies: None. The .NET SDK supplies framework and build-time components.
 - Reviewed: 2026-08-24
 
-The release's `CabacInitTable.cs` header and `LICENSE-3RDPARTY.md` attribute its generated CABAC initialization values to Cisco OpenH264 under BSD-2-Clause. On 2026-08-24, the user approved a temporary, narrowly scoped exception to this repository's MIT-only policy for that table while H264Sharp's provenance is corrected. Upgrade to the corrected H264Sharp release and remove this exception before a supported package release.
+The tagged release's `LICENSE` declares H264Sharp under MIT. Its `CabacInitTable.cs` header and `LICENSE-3RDPARTY.md` preserve a precautionary BSD-2-Clause attribution to Cisco OpenH264 for CABAC context-initialization values corresponding to ITU-T H.264 Tables 9-12 through 9-24. The same attribution file states that formulas, syntax structures, and lookup tables defined directly by the H.264 specification are not subject to third-party copyright. The current upstream README further clarifies that these values are standard-mandated facts, OpenH264 merely transcribes them, and the precautionary attribution does not change H264Sharp's MIT licensing. This project retains the attribution; no OpenH264 source or binary is copied, linked, packaged, or distributed.
 
 The deterministic neutral 16x16 Annex-B fixture embedded in the protocol specifications was generated with `H264Sharp.Encoder` at the same tagged release and commit. The encoder is MIT-licensed, depends only on `H264Sharp.Decoder`, and is not a package dependency of this repository.
 
@@ -34,6 +35,7 @@ The generated source was resampled into the committed metadata-free PNG and mult
 - Version: `12.1.1`
 - Primary license: MIT
 - Purpose: Cross-platform desktop windowing, controls, styling, accessibility, and rendering for the Windows and Linux camera sample.
+- Boundary: Avalonia is referenced only by the non-packable desktop sample and is not a dependency of either NuGet library package.
 - Reviewed: 2026-08-24
 
 The audited managed Avalonia closure is `Avalonia`, `Avalonia.BuildServices` 11.3.2, `Avalonia.FreeDesktop`, `Avalonia.FreeDesktop.AtSpi`, `Avalonia.HarfBuzz`, `Avalonia.Native`, `Avalonia.Remote.Protocol`, `Avalonia.Skia`, `Avalonia.Win32`, and `Avalonia.X11`; Avalonia packages are version 12.1.1 unless noted. Other managed dependencies are `MicroCom.Runtime` 0.11.6 and `Tmds.DBus.Protocol` 0.94.1. These components are MIT-licensed.

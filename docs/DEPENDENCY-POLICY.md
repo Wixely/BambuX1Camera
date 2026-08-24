@@ -18,8 +18,8 @@ Protocol facts and observed wire behavior may inform an independently authored i
 ## Current position
 
 - The repository code is independently authored and licensed under MIT.
-- The imaging package declares the temporarily approved `H264Sharp.Decoder` dependency described below.
-- The desktop sample declares Avalonia 12.1.1 and its audited renderer closure under the explicitly approved exception described below.
+- The imaging package declares the MIT-licensed `H264Sharp.Decoder` dependency described below.
+- The non-packable desktop sample declares Avalonia 12.1.1 and its audited renderer closure under the explicitly approved exception described below. Neither NuGet library package references Avalonia.
 - The .NET target framework is supplied by the platform and is not bundled as third-party source in the library package.
 - No Bambu binaries, camera captures, or third-party source files are included.
 
@@ -36,19 +36,20 @@ Before adding or updating any dependency, asset, workflow action, copied snippet
 
 An exception requires a new explicit user decision that supersedes this policy.
 
-## Temporary approved exception
+## H264Sharp licensing determination
 
 - Component: `H264Sharp.Decoder` 1.0.2
-- Scope: The generated CABAC initialization table attributed by H264Sharp to BSD-2-Clause OpenH264.
-- Decision: The user explicitly approved using the current package temporarily on 2026-08-24 while H264Sharp's table provenance is corrected.
-- Boundary: This does not permit any other non-MIT dependency, copied source, asset, tool, or generated input.
-- Required follow-up: Upgrade to the corrected H264Sharp release, repeat the dependency audit, update `THIRD-PARTY-NOTICES.md`, and remove this exception before a supported package release.
-- Review date: 2026-09-30
+- Primary license: MIT, as declared by the tagged release's `LICENSE` and package metadata.
+- Attribution: The tagged `LICENSE-3RDPARTY.md` preserves a precautionary BSD-2-Clause attribution for CABAC context-initialization values transcribed through OpenH264.
+- Specification status: The same file states that formulas, syntax structures, and lookup tables defined directly by ITU-T H.264 are not subject to third-party copyright. The current upstream README identifies the values as mandated by ITU-T H.264 Tables 9-12 through 9-24 and says the precautionary attribution does not alter the MIT license.
+- Decision: Admit H264Sharp as an MIT dependency and preserve its precautionary attribution. No separate dependency-policy exception is required.
+- Boundary: No OpenH264 source or binary is copied, linked, packaged, or distributed by this project.
+- Reviewed: 2026-08-24
 
 ## Approved Avalonia renderer exception
 
 - Components: Google Skia native renderer under BSD-3-Clause and ANGLE Windows native renderer under its BSD-style license and bundled third-party notices.
-- Scope: Native renderer binaries transitively required by Avalonia Desktop 12.1.1 for the Windows and Linux sample application.
+- Scope: Native renderer binaries transitively required by Avalonia Desktop 12.1.1 for the non-packable Windows and Linux sample application. Neither NuGet library package references or distributes Avalonia.
 - Decision: The user explicitly approved this narrow exception on 2026-08-24 after the exact Avalonia dependency closure was reported.
 - Boundary: Avalonia's managed packages and the remaining transitive packages must remain MIT-licensed. This exception does not authorize unrelated non-MIT dependencies, source, assets, tools, or generated inputs.
 - Required review: Repeat the complete renderer and transitive-license audit before updating Avalonia or publishing desktop binaries.
