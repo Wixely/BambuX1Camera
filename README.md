@@ -30,7 +30,24 @@ Avalonia is used only by the desktop sample application. It is not referenced by
 - A hardware still-capture run decoded the next IDR through H264Sharp into a structurally and visually validated 1760x1080 PNG, without retaining the private image in the repository.
 - A physical Windows desktop run connected, navigated to the viewer, batch-decoded a bounded GOP through H264Sharp, and displayed an RGB24 frame. The temporary ignored settings copy used for that test was deleted afterward.
 - Self-contained single-file Windows and Linux desktop artifacts both passed graphical startup tests. A separate Linux physical-device run streamed for eight seconds and captured a valid PNG through H264Sharp. Longer-duration Linux desktop video validation remains planned.
-- GitHub publishing and the host plugin contract remain planned.
+- A repository-owned GitHub Actions workflow verifies Windows and Linux on every change. Tags matching the package version build, validate in a clean consumer, and publish both NuGet packages to GitHub Packages; the host plugin contract remains planned.
+
+## Install the packages
+
+The first prerelease is `0.1.0-alpha.1`. Both packages are published from approved `v*` tags to Wixely's GitHub Packages NuGet feed:
+
+```powershell
+dotnet nuget add source "https://nuget.pkg.github.com/Wixely/index.json" `
+    --name github-wixely `
+    --username Wixely `
+    --password $env:GITHUB_PACKAGES_TOKEN `
+    --store-password-in-clear-text
+
+dotnet add package BambuLab.X1Camera --version 0.1.0-alpha.1
+dotnet add package BambuLab.X1Camera.Imaging --version 0.1.0-alpha.1
+```
+
+GitHub requires authentication for NuGet package downloads, including public packages. Use a classic personal access token with `read:packages`, keep it outside the repository, and clear the environment variable after configuring the user-level NuGet credentials. Applications that only need encoded H.264 should install the core package; install the imaging package when RGB24 or PNG decoding is required. Neither package depends on Avalonia.
 
 ## Build and verify
 
@@ -47,7 +64,7 @@ The repository includes VS Code build and debug configuration. The default debug
 
 ## Sample desktop application
 
-![Avalonia desktop viewer showing a live printer camera stream](docs/images/desktop-viewer.png)
+![Avalonia desktop viewer showing a live printer camera stream](https://raw.githubusercontent.com/Wixely/BambuX1Camera/main/docs/images/desktop-viewer.png)
 
 The non-packable Avalonia sample displaying a live stream. It demonstrates connection, decoding, display, and PNG capture using the reusable packages; applications can provide any user interface or consume the encoded H.264 without a UI. The private printer address and equipment label have been redacted from this screenshot.
 
@@ -177,7 +194,7 @@ Only one reader is permitted per printer session, using either the NAL or access
 
 ## Project boundaries
 
-This folder is currently a local source project with no remote. It is MIT-licensed, but the GitHub owner, repository visibility, package visibility, and publication timing have not been selected. Do not publish it until those choices are explicit and the pre-push review is complete.
+The source repository and associated packages are published publicly under `Wixely/BambuX1Camera`. Version tags remain prereleases until the outstanding hardware/recovery matrix and public API stability work in the project plan are complete.
 
 H264Sharp 1.0.2 is MIT-licensed. Its third-party notice preserves a precautionary BSD-2-Clause attribution for CABAC context-initialization values transcribed through OpenH264, while also stating that H.264 specification formulas and lookup tables are not subject to third-party copyright. The [current H264Sharp README](https://github.com/Wixely/H264Sharp#licensing) further clarifies that these values are mandated by ITU-T H.264 Tables 9-12 through 9-24 and that the precautionary attribution does not change the project's MIT licensing. This repository retains the attribution in [third-party notices](THIRD-PARTY-NOTICES.md).
 

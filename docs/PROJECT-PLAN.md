@@ -1,6 +1,6 @@
 # BambuLab.X1Camera project plan
 
-- Status: Initial plan
+- Status: Active prerelease
 - Recorded: 2026-08-24
 - Source: User requirements and the existing X1C camera investigation
 - Review date: 2026-09-30
@@ -100,7 +100,7 @@ The viewer should provide:
 
 ## GitHub Packages and release plan
 
-- Keep package identifiers provisional until the GitHub owner/repository is selected and name ownership is checked.
+- Publish the public repository as `Wixely/BambuX1Camera` and use the package identifiers `BambuLab.X1Camera` and `BambuLab.X1Camera.Imaging`.
 - Build deterministic `.nupkg` and symbol packages with README, XML documentation, repository metadata, Source Link, and dependency/license notices.
 - Publish every package with the SPDX license expression `MIT` and include the repository's dependency notices.
 - Reject any direct or transitive dependency, vendored asset, packaged tool, generated source input, or workflow action that is not verified as MIT-licensed or covered by a narrowly recorded user-approved exception.
@@ -148,8 +148,8 @@ The viewer should provide:
 ### 0.5 - Package release
 
 - [x] License the project under MIT and adopt an MIT-only/self-authored source policy. - Owner: user
-- [ ] Decide GitHub owner, repository visibility, package visibility, and final package identifiers. - Owner: user
-- [ ] Add GitHub Actions verification and package publishing workflows with least-privilege permissions. - Owner: TBD
+- [x] Select `Wixely/BambuX1Camera` as the public source repository, publish associated packages publicly, and retain the package identifiers `BambuLab.X1Camera` and `BambuLab.X1Camera.Imaging`. - Owner: user
+- [x] Add a least-privilege GitHub Actions workflow that verifies Windows/Linux and publishes tagged packages without third-party action dependencies. - Owner: agent
 - [ ] Audit every direct and transitive dependency, asset, packaged tool, generated source input, and workflow action against the dependency policy and recorded exceptions. - Owner: TBD
 - [ ] Complete Windows/Linux consumer installation and physical-X1C release tests. - Owner: TBD
 - [ ] Complete privacy, binary provenance, license, package-content, and outgoing-history review before the first push. - Owner: TBD
@@ -168,7 +168,6 @@ The viewer should provide:
 
 ## Open decisions
 
-- Which GitHub owner and repository will host the source and packages, and will each be public or private?
 - Should the first package release expose only PNG, or add JPEG after the PNG API and viewer are stable?
 - Which plugin host should define the first compatibility target?
 - Which exact X1C firmware, camera settings, and network isolation model form the supported test matrix?
