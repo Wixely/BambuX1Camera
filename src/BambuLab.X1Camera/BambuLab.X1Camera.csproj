@@ -5,7 +5,7 @@
     <RootNamespace>BambuLab.X1Camera</RootNamespace>
     <Description>Managed .NET transport for Bambu Lab X1-series LAN camera streams.</Description>
     <PackageId>BambuLab.X1Camera</PackageId>
-    <Version>0.1.0-alpha.2</Version>
+    <Version>0.1.0-alpha.3</Version>
     <Authors>Wixely</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
