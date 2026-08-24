@@ -150,9 +150,9 @@ The viewer should provide:
 - [x] License the project under MIT and adopt an MIT-only/self-authored source policy. - Owner: user
 - [x] Select `Wixely/BambuX1Camera` as the public source repository, publish associated packages publicly, and retain the package identifiers `BambuLab.X1Camera` and `BambuLab.X1Camera.Imaging`. - Owner: user
 - [x] Add a least-privilege GitHub Actions workflow that verifies Windows/Linux and publishes tagged packages without third-party action dependencies. - Owner: agent
-- [ ] Audit every direct and transitive dependency, asset, packaged tool, generated source input, and workflow action against the dependency policy and recorded exceptions. - Owner: TBD
+- [x] Audit every direct and transitive dependency, asset, packaged tool, generated source input, and workflow action against the dependency policy and recorded exceptions. The release audit was repeated on 2026-08-24; all package declarations are MIT except the previously approved Avalonia native-renderer exception, and the independently authored workflow has no external action dependencies. - Owner: agent
 - [ ] Complete Windows/Linux consumer installation and physical-X1C release tests. - Owner: TBD
-- [ ] Complete privacy, binary provenance, license, package-content, and outgoing-history review before the first push. - Owner: TBD
+- [x] Complete privacy, binary provenance, license, package-content, and outgoing-history review before the first push. The 2026-08-24 review covered every reachable commit and path, all three image/icon binaries and their metadata, package archives and symbols, commit identities/messages, file modes, ignored outputs, and credential/private-configuration patterns. - Owner: agent
 - [ ] Publish the approved prerelease packages and verify installation from GitHub Packages. - Owner: TBD
 
 ## Acceptance criteria for the first supported release
