@@ -42,7 +42,14 @@ internal abstract class RtspAuthenticator
             throw new NotSupportedException("The RTSP digest challenge does not offer the 'auth' quality of protection.");
         }
 
-        return new DigestAuthenticator(username, password, realm, nonce, opaque, string.IsNullOrWhiteSpace(qop) ? null : "auth");
+        return new DigestAuthenticator(
+            username,
+            password,
+            realm,
+            nonce,
+            opaque,
+            string.IsNullOrWhiteSpace(qop) ? null : "auth",
+            string.IsNullOrWhiteSpace(algorithm) ? null : "MD5");
     }
 
     public abstract string CreateAuthorization(string method, Uri requestUri);
@@ -116,7 +123,8 @@ internal abstract class RtspAuthenticator
         string realm,
         string nonce,
         string? opaque,
-        string? qop) : RtspAuthenticator
+        string? qop,
+        string? algorithm) : RtspAuthenticator
     {
         private int nonceCount;
 
@@ -145,7 +153,12 @@ internal abstract class RtspAuthenticator
                 response = Md5Hex($"{ha1}:{nonce}:{ha2}");
             }
 
-            builder.Append("response=\"").Append(response).Append("\", algorithm=MD5");
+            builder.Append("response=\"").Append(response).Append('"');
+            if (algorithm is not null)
+            {
+                builder.Append(", algorithm=").Append(algorithm);
+            }
+
             if (!string.IsNullOrEmpty(opaque))
             {
                 builder.Append(", opaque=\"").Append(Escape(opaque)).Append('"');
@@ -159,4 +172,3 @@ internal abstract class RtspAuthenticator
         private static string Escape(string value) => value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal);
     }
 }
-

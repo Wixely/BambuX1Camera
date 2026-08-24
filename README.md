@@ -11,9 +11,9 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 ## Current status
 
 - Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, and FU-A packet handling.
-- Supports OS certificate validation or a configured SHA-256 certificate pin. Unsafe trust bypass is present only in the library options for isolated diagnostic work and is not exposed by the sample.
-- Includes dependency-free protocol specifications and a console probe that can optionally capture the encoded Annex-B stream.
-- Has not yet been exercised against the target physical X1C. The current protocol implementation is based on the researched community specification and must be hardware-validated before being treated as stable.
+- Supports OS certificate validation or a configured SHA-256 certificate pin. The console probe can perform an explicit trust-on-first-use certificate observation without sending credentials, then pin the accepted certificate for the authenticated connection.
+- Includes dependency-free protocol specifications and an interactive console probe that supports timed tests and optional encoded Annex-B capture.
+- A 30-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, clean cancellation/disposal, and encoded H.264 output with repeated IDR frames. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
 - Browser fMP4/WebCodecs delivery, still-image capture, the sample viewer, GitHub publishing, and the host plugin contract are planned next; they are not part of this initial slice.
 
 ## Build and verify
@@ -29,16 +29,24 @@ The repository includes VS Code build and debug configuration. The default debug
 
 ## Probe a printer
 
-Enable LAN live view on the printer. Keep credentials in environment variables rather than source files or command arguments:
+Enable LAN live view on the printer, build the solution, and start the probe interactively:
+
+```powershell
+.\samples\BambuLab.X1Camera.Probe\bin\Debug\net10.0\BambuLab.X1Camera.Probe.exe --configure --duration 30
+```
+
+The probe masks access-code input. When no certificate pin is available, it observes the certificate without sending credentials and asks before trusting and pinning it. It then offers to save the printer address, access code, and certificate pin in `bambu-x1-camera.settings.json` beside the executable. Values are Base64-encoded UTF-8: this is reversible encoding, not encryption. Saving is opt-in and the filename is ignored by Git.
+
+Later runs load that file automatically. Use `--configure` to replace it, `--duration N` for a bounded test, and `--output capture.h264` to save the encoded Annex-B stream. Capture output uses `FileMode.CreateNew` so it cannot silently overwrite an existing file.
+
+Environment variables remain available for automation and take precedence over the saved file:
 
 ```powershell
 $env:BAMBU_X1_HOST = "printer-address"
 $env:BAMBU_X1_ACCESS_CODE = "access-code"
 $env:BAMBU_X1_CERT_SHA256 = "printer-certificate-sha256-fingerprint"
-dotnet run --project .\samples\BambuLab.X1Camera.Probe\BambuLab.X1Camera.Probe.csproj
+dotnet run --project .\samples\BambuLab.X1Camera.Probe\BambuLab.X1Camera.Probe.csproj -- --duration 30
 ```
-
-To save the encoded stream for validation with an independent player, add `--output capture.h264`. The command uses `FileMode.CreateNew` so it cannot silently overwrite an existing capture.
 
 Environment variables are inherited by child processes. Clear sensitive values from the shell after testing:
 
@@ -67,6 +75,7 @@ Only one reader is permitted per printer session. A plugin host should maintain 
 
 - Never log the access code, authorization headers, printer serial, certificate fingerprint, or private network address.
 - Prefer a verified SHA-256 certificate pin when the printer certificate is not trusted by the operating system. Do not ship with `AllowUntrustedCertificate` enabled.
+- The probe's optional local JSON is intended only for isolated development. Base64 does not protect credentials from another user or process that can read the file; delete it after testing or use environment variables instead on shared systems.
 - Bind any future restream endpoint to an explicitly configured interface, authenticate viewers, and default recording to off.
 - The protocol is not an officially supported Bambu third-party contract and may change with firmware.
 

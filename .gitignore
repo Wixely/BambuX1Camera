@@ -8,3 +8,4 @@ artifacts/
 *.h264
 *.264
 *.log
+bambu-x1-camera.settings.json

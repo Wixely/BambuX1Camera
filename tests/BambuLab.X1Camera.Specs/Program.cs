@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using BambuLab.X1Camera;
+using BambuLab.X1Camera.Probe;
 using BambuLab.X1Camera.Protocol;
 
 var specifications = new (string Name, Func<Task> Run)[]
@@ -13,7 +14,10 @@ var specifications = new (string Name, Func<Task> Run)[]
     ("FU-A sequence gaps discard partial units", FuASequenceGapIsDiscarded),
     ("SDP parser discovers the H264 video track", SdpParserDiscoversH264Track),
     ("RTSP wire reader separates responses and interleaved frames", RtspWireReaderSeparatesFrames),
-    ("digest authentication does not disclose the access code", DigestAuthenticationDoesNotDiscloseAccessCode)
+    ("digest authentication does not disclose the access code", DigestAuthenticationDoesNotDiscloseAccessCode),
+    ("legacy digest omits an unchallenged algorithm", LegacyDigestOmitsUnchallengedAlgorithm),
+    ("digest echoes an explicitly challenged MD5 algorithm", DigestEchoesExplicitMd5Algorithm),
+    ("probe settings round-trip without plaintext values", ProbeSettingsRoundTripWithoutPlaintext)
 };
 
 var failures = 0;
@@ -146,6 +150,49 @@ static Task DigestAuthenticationDoesNotDiscloseAccessCode()
     AssertEx.False(value.Contains(secret, StringComparison.Ordinal));
     AssertEx.True(value.Contains("qop=auth", StringComparison.Ordinal));
     return Task.CompletedTask;
+}
+
+static Task LegacyDigestOmitsUnchallengedAlgorithm()
+{
+    var authenticator = RtspAuthenticator.Parse("Digest realm=\"camera\", nonce=\"abc\"", "bblp", "test-code");
+    var value = authenticator.CreateAuthorization("DESCRIBE", new Uri("rtsps://printer.local:322/streaming/live/1"));
+    AssertEx.False(value.Contains("algorithm=", StringComparison.OrdinalIgnoreCase));
+    return Task.CompletedTask;
+}
+
+static Task DigestEchoesExplicitMd5Algorithm()
+{
+    var authenticator = RtspAuthenticator.Parse("Digest realm=\"camera\", nonce=\"abc\", algorithm=MD5", "bblp", "test-code");
+    var value = authenticator.CreateAuthorization("DESCRIBE", new Uri("rtsps://printer.local:322/streaming/live/1"));
+    AssertEx.True(value.Contains("algorithm=MD5", StringComparison.Ordinal));
+    return Task.CompletedTask;
+}
+
+static async Task ProbeSettingsRoundTripWithoutPlaintext()
+{
+    const string host = "printer.example";
+    const string accessCode = "test-code";
+    const string certificatePin = "00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF";
+    var path = Path.Combine(Path.GetTempPath(), $"bambu-x1-camera-settings-{Guid.NewGuid():N}.json");
+    try
+    {
+        await ProbeSettingsStore.SaveAsync(path, new ProbeSettings(host, accessCode, certificatePin, 322), CancellationToken.None);
+        var contents = await File.ReadAllTextAsync(path);
+        AssertEx.False(contents.Contains(host, StringComparison.Ordinal));
+        AssertEx.False(contents.Contains(accessCode, StringComparison.Ordinal));
+        AssertEx.False(contents.Contains(certificatePin, StringComparison.Ordinal));
+
+        var loaded = await ProbeSettingsStore.LoadAsync(path, CancellationToken.None);
+        AssertEx.Equal(host, loaded.Host);
+        AssertEx.Equal(accessCode, loaded.AccessCode);
+        AssertEx.Equal(certificatePin, loaded.CertificateSha256);
+        AssertEx.Equal(322, loaded.Port);
+        AssertEx.False(loaded.ToString().Contains(accessCode, StringComparison.Ordinal));
+    }
+    finally
+    {
+        File.Delete(path);
+    }
 }
 
 static RtpPacket ParseRtp(ushort sequence, uint timestamp, bool marker, byte[] payload)

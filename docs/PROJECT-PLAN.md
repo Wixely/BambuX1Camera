@@ -22,6 +22,7 @@ The project and all independently authored code are MIT-licensed. Implementation
 - Include a sample viewer application.
 - License the project under MIT.
 - Use only independently authored or MIT-licensed implementation code and dependencies, including the complete transitive dependency graph.
+- The diagnostic console probe may optionally save the printer address, access code, and certificate pin as Base64-encoded UTF-8 in ignored JSON beside its executable. Saving must be opt-in and clearly identified as reversible encoding rather than encryption. Confirmed by the user on 2026-08-24.
 
 ## Proposed architecture
 
@@ -58,7 +59,7 @@ Working package name: `BambuLab.X1Camera`.
 - SDP discovery, interleaved RTP, loss detection, keepalive, bounded buffering, reconnection, and cancellation.
 - Encoded H.264 access-unit/NAL APIs with timing and stream metadata.
 - Single upstream printer session with safe fan-out for multiple consumers.
-- No logging, persistence, debugger display, or exception disclosure of the access code.
+- No logging, debugger display, or exception disclosure of the access code. Core transport packages do not persist credentials; the diagnostic probe has the explicit opt-in encoded-file exception recorded above.
 
 ### Streaming integration
 
@@ -121,7 +122,8 @@ The viewer should provide:
 - [x] Create the managed .NET 10 library and probe. - Owner: agent
 - [x] Implement the initial RTSPS, authentication, SDP, RTP, and H.264 depacketisation path. - Owner: agent
 - [x] Add bounded protocol specifications and VS Code debugging. - Owner: agent
-- [ ] Validate connection, SDP, NAL output, keepalive, and teardown against the target X1C firmware. - Owner: TBD
+- [x] Add interactive probe configuration, optional encoded local settings, timed tests, and first-contact certificate pin confirmation. - Owner: agent
+- [ ] Complete hardware validation. A 30-second Windows run on 2026-08-24 confirmed TLS pinning, legacy Digest authentication, SDP, setup/playback, repeated IDR output, and clean cancellation/disposal; explicit keepalive/teardown response checks, interruption/restart, longer duration, and Linux remain. - Owner: agent
 - [ ] Capture sanitized protocol fixtures for deterministic regression tests. - Owner: TBD
 
 ### 0.2 - Reliable video
