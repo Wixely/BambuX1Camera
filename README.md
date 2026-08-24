@@ -34,7 +34,7 @@ Avalonia is used only by the desktop sample application. It is not referenced by
 
 ## Install the packages
 
-The first prerelease is `0.1.0-alpha.1`. Both packages are published from approved `v*` tags to Wixely's GitHub Packages NuGet feed:
+The latest prerelease is `0.1.0-alpha.2`. Both packages are published from approved `v*` tags to Wixely's GitHub Packages NuGet feed:
 
 ```powershell
 dotnet nuget add source "https://nuget.pkg.github.com/Wixely/index.json" `
@@ -43,8 +43,8 @@ dotnet nuget add source "https://nuget.pkg.github.com/Wixely/index.json" `
     --password $env:GITHUB_PACKAGES_TOKEN `
     --store-password-in-clear-text
 
-dotnet add package BambuLab.X1Camera --version 0.1.0-alpha.1
-dotnet add package BambuLab.X1Camera.Imaging --version 0.1.0-alpha.1
+dotnet add package BambuLab.X1Camera --version 0.1.0-alpha.2
+dotnet add package BambuLab.X1Camera.Imaging --version 0.1.0-alpha.2
 ```
 
 GitHub requires authentication for NuGet package downloads, including public packages. Use a classic personal access token with `read:packages`, keep it outside the repository, and clear the environment variable after configuring the user-level NuGet credentials. Applications that only need encoded H.264 should install the core package; install the imaging package when RGB24 or PNG decoding is required. Neither package depends on Avalonia.
@@ -67,6 +67,8 @@ The repository includes VS Code build and debug configuration. The default debug
 ![Avalonia desktop viewer showing a live printer camera stream](https://raw.githubusercontent.com/Wixely/BambuX1Camera/main/docs/images/desktop-viewer.png)
 
 The non-packable Avalonia sample displaying a live stream. It demonstrates connection, decoding, display, and PNG capture using the reusable packages; applications can provide any user interface or consume the encoded H.264 without a UI. The private printer address and equipment label have been redacted from this screenshot.
+
+Approved version tags publish the sample through [GitHub Releases](https://github.com/Wixely/BambuX1Camera/releases) as direct, self-contained single-file downloads for Windows x64 and Linux x64. Windows users can run the `.exe` directly. On Linux, mark the extensionless download executable with `chmod +x` and launch it from an X11 or XWayland desktop. No separately installed .NET runtime is required. Each release also includes SHA-256 checksums and a separate archive containing the project license and required native-renderer notices.
 
 Start the Avalonia desktop client on Windows or Linux:
 
