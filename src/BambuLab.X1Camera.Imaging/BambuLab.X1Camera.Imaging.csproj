@@ -3,7 +3,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>BambuLab.X1Camera.Imaging</AssemblyName>
     <RootNamespace>BambuLab.X1Camera.Imaging</RootNamespace>
-    <Description>Managed H.264 still-image capture for BambuLab.X1Camera.</Description>
+    <Description>Managed H.264 video and PNG still-image decoding for BambuLab.X1Camera.</Description>
     <PackageId>BambuLab.X1Camera.Imaging</PackageId>
     <Version>0.1.0-alpha.1</Version>
     <Authors>Wixely</Authors>

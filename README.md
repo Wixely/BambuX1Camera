@@ -13,11 +13,12 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 - Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, FU-A, and complete access-unit assembly.
 - Uses one RTSP reader to dispatch control responses by `CSeq` while feeding a bounded RTP queue. It acknowledges adaptive `OPTIONS` keepalives and teardown, exposes stream-health metrics, and reconnects established streams with a bounded retry policy.
 - Supports OS certificate validation or a configured SHA-256 certificate pin. The console probe can perform an explicit trust-on-first-use certificate observation without sending credentials, then pin the accepted certificate for the authenticated connection.
-- Includes bounded protocol specifications, an interactive console probe, and an Avalonia desktop client with secure first-contact certificate pinning, optional encoded settings, and separate connection/viewer pages.
+- Includes bounded protocol specifications, an interactive console probe, and an Avalonia desktop client with secure first-contact certificate pinning, optional encoded settings, live RGB24 video, and PNG capture.
 - A 35-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, six adaptive keepalive acknowledgements, acknowledged teardown, and 901 encoded H.264 NAL units with no observed packet gaps, malformed packets, queue drops, or reconnects. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
 - A subsequent 10-second hardware run validated the access-unit API with 239 complete encoded frames, repeated SPS/PPS-equipped IDR output, normalized presentation times, acknowledged keepalive and teardown, and no observed packet gaps, malformed packets, queue drops, or reconnects.
 - A hardware still-capture run decoded the next IDR through H264Sharp into a structurally and visually validated 1760x1080 PNG, without retaining the private image in the repository.
-- Live desktop decoding, desktop PNG capture, portable publishing, GitHub publishing, and the host plugin contract remain planned.
+- A physical Windows desktop run connected, navigated to the viewer, batch-decoded a bounded GOP through H264Sharp, and displayed an RGB24 frame. The temporary ignored settings copy used for that test was deleted afterward.
+- Portable publishing, Linux runtime validation, GitHub publishing, and the host plugin contract remain planned.
 
 ## Build and verify
 
@@ -40,7 +41,7 @@ Start the Avalonia desktop client on Windows or Linux:
 dotnet run --project .\samples\BambuLab.X1Camera.Desktop\BambuLab.X1Camera.Desktop.csproj
 ```
 
-Enter the printer address and LAN access code. Before sending credentials, the application observes the printer TLS certificate and requires an explicit trust decision if the operating system does not trust it. A successful connection opens a separate viewer page.
+Enter the printer address and LAN access code. Before sending credentials, the application observes the printer TLS certificate and requires an explicit trust decision if the operating system does not trust it. A successful connection opens a separate viewer page that batch-decodes bounded H.264 GOPs off the UI thread. The capture button decodes the next complete keyframe and opens the platform PNG save picker.
 
 Saving is optional. When enabled, the application writes the compatible `bambu-x1-camera.settings.json` file beside its executable. Values are Base64-encoded UTF-8 rather than encrypted; this prevents accidental plaintext disclosure but does not protect against a user or process that can read the file.
 
@@ -94,6 +95,16 @@ await foreach (var accessUnit in session.ReadAccessUnitsAsync(cancellationToken)
 }
 
 var metrics = session.Metrics;
+```
+
+Decode a complete IDR-led GOP into display-order RGB24 frames in a desktop host:
+
+```csharp
+var frames = new X1CameraGopDecoder().Decode(accessUnits);
+foreach (var frame in frames)
+{
+    // frame.Rgb24Data is tightly packed width * height * 3 RGB data.
+}
 ```
 
 Install the optional imaging package and capture a still from a fresh session:

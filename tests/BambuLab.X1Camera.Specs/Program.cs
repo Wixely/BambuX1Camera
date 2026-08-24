@@ -19,6 +19,7 @@ var specifications = new (string Name, Func<Task> Run)[]
     ("access-unit timestamps handle RTP wraparound", AccessUnitTimestampsHandleWraparound),
     ("access-unit assembly is bounded and recovers", AccessUnitAssemblyIsBounded),
     ("H264Sharp still decoder produces a valid PNG", H264SharpStillDecoderProducesPng),
+    ("H264Sharp GOP decoder produces RGB24 video frames", H264SharpGopDecoderProducesRgb24),
     ("access-unit fan-out isolates slow bounded consumers", AccessUnitFanOutIsBounded),
     ("SDP parser discovers the H264 video track", SdpParserDiscoversH264Track),
     ("RTSP wire reader separates responses and interleaved frames", RtspWireReaderSeparatesFrames),
@@ -207,6 +208,30 @@ static Task H264SharpStillDecoderProducesPng()
     AssertEx.SequenceEqual(new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a }, image.Data.Span[..8]);
     AssertEx.Equal(16, BinaryPrimitives.ReadInt32BigEndian(image.Data.Span.Slice(16, 4)));
     AssertEx.Equal(16, BinaryPrimitives.ReadInt32BigEndian(image.Data.Span.Slice(20, 4)));
+    return Task.CompletedTask;
+}
+
+static Task H264SharpGopDecoderProducesRgb24()
+{
+    var encoded = Convert.FromBase64String("AAAAAWdC4B7acQAAAAFozjyAAAAAAWWIhAiieA==");
+    var accessUnit = new H264AccessUnit(
+        encoded,
+        4321,
+        TimeSpan.FromMilliseconds(50),
+        4,
+        3,
+        isKeyFrame: true,
+        hasSequenceParameterSet: true,
+        hasPictureParameterSet: true,
+        discontinuity: false);
+
+    var frames = new X1CameraGopDecoder().Decode([accessUnit]);
+    AssertEx.Equal(1, frames.Count);
+    AssertEx.Equal(16, frames[0].Width);
+    AssertEx.Equal(16, frames[0].Height);
+    AssertEx.Equal((uint)4321, frames[0].RtpTimestamp);
+    AssertEx.Equal(TimeSpan.FromMilliseconds(50), frames[0].PresentationTime);
+    AssertEx.Equal(16 * 16 * 3, frames[0].Rgb24Data.Length);
     return Task.CompletedTask;
 }
 

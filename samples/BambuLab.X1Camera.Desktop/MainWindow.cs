@@ -8,6 +8,7 @@ internal sealed class MainWindow : Window
     private readonly CancellationTokenSource lifetime = new();
     private readonly ConnectionView connectionView = new();
     private X1CameraSession? session;
+    private ViewerView? viewer;
     private DesktopSettings? loadedSettings;
     private PendingConnection? pendingConnection;
 
@@ -28,6 +29,13 @@ internal sealed class MainWindow : Window
     protected override void OnClosed(EventArgs eventArgs)
     {
         lifetime.Cancel();
+        if (viewer is not null)
+        {
+            viewer.Stop();
+            viewer.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            viewer = null;
+        }
+
         if (session is not null)
         {
             session.DisposeAsync().AsTask().GetAwaiter().GetResult();
@@ -133,7 +141,7 @@ internal sealed class MainWindow : Window
                 await DesktopSettingsStore.SaveAsync(DesktopSettingsStore.DefaultPath, loadedSettings, lifetime.Token);
             }
 
-            var viewer = new ViewerView(request.Host);
+            viewer = new ViewerView(request.Host, session);
             viewer.DisconnectRequested += (_, _) => _ = DisconnectAsync();
             Content = viewer;
         }
@@ -155,6 +163,12 @@ internal sealed class MainWindow : Window
 
     private async Task DisconnectAsync()
     {
+        if (viewer is not null)
+        {
+            await viewer.DisposeAsync();
+            viewer = null;
+        }
+
         if (session is not null)
         {
             await session.DisposeAsync();

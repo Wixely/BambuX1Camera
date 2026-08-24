@@ -7,6 +7,7 @@
     <ApplicationTitle>Bambu X1 Camera</ApplicationTitle>
     <ApplicationIcon />
     <PackageId>BambuLab.X1Camera.Desktop</PackageId>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,5 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BambuLab.X1Camera\BambuLab.X1Camera.csproj" />
+    <ProjectReference Include="..\..\src\BambuLab.X1Camera.Imaging\BambuLab.X1Camera.Imaging.csproj" />
   </ItemGroup>
 </Project>

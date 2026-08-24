@@ -9,7 +9,7 @@
 
 Produce a reusable .NET library that connects directly to a Bambu Lab X1 Carbon camera with the printer's LAN access code, provides still images and live video without Bambu's proprietary Windows DLLs, can be embedded behind a plugin boundary, and is distributed as versioned NuGet packages through GitHub Packages. Include a basic viewer application that demonstrates the supported APIs without becoming a second production product.
 
-The project and all independently authored code are MIT-licensed. Implementation code, dependencies, transitive dependencies, browser assets, packaged tools, and workflow actions must be MIT-licensed or independently authored for this project. Non-MIT implementation code must not be copied or adapted; protocol facts may only inform a separately authored implementation.
+The project and all independently authored code are MIT-licensed. Implementation code, dependencies, transitive dependencies, assets, packaged tools, and workflow actions must be MIT-licensed, independently authored, or covered by a narrowly recorded user-approved exception. Non-MIT implementation code must not be copied or adapted; protocol facts may only inform a separately authored implementation.
 
 ## Confirmed requirements
 
@@ -133,14 +133,14 @@ The viewer should provide:
 - [ ] Confirm whether the tested X1C firmware offers a native still endpoint. - Owner: TBD
 - [x] Define the PNG still-image result contract and optional imaging-package boundary. - Owner: agent
 - [x] Implement `CapturePngAsync` and `X1CameraPngDecoder` using H264Sharp. A Windows hardware run on 2026-08-24 decoded and visually validated a 1760x1080 frame; the private test image was not retained. - Owner: agent
-- [ ] Implement desktop viewer PNG capture. - Owner: agent
+- [x] Implement desktop viewer PNG capture through the platform save picker. - Owner: agent
 - [x] Select H264Sharp for headless still capture and audit version 1.0.2. A narrow temporary BSD-table exception was approved by the user on 2026-08-24. - Owner: user and agent
 - [ ] Upgrade to the corrected H264Sharp release and remove the temporary dependency-policy exception. - Owner: user and agent - Review: 2026-09-30
 
 ### 0.4 - Viewer and plugin contract
 
 - [x] Build the Avalonia connection page with masked input, certificate-pin confirmation, optional encoded settings, and viewer navigation. - Owner: agent
-- [ ] Add bounded live decoding, video display, status, and PNG capture to the Avalonia viewer. - Owner: agent
+- [x] Add bounded GOP decoding, RGB24 video display, drop/reconnect status, and PNG capture to the Avalonia viewer. A physical Windows run on 2026-08-24 reached the viewer and displayed decoded video. - Owner: agent
 - [ ] Add portable self-contained Windows and Linux publish profiles and verify them on available platforms. - Owner: agent
 - [ ] Extract the smallest host-neutral plugin contract after both video and still APIs are proven. - Owner: TBD
 - [ ] Add security, reconnect, malformed-input, and multi-consumer tests. - Owner: TBD

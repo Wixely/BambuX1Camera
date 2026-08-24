@@ -8,7 +8,7 @@
 - Version: `1.0.2`
 - Release commit: `42019859ba0de5cd8290cbfc71f2e28751edfe37`
 - Primary license: MIT
-- Purpose: Pure-managed H.264 keyframe decoding, YUV-to-RGB conversion, and PNG encoding in the optional `BambuLab.X1Camera.Imaging` package.
+- Purpose: Pure-managed H.264 GOP and keyframe decoding, YUV-to-RGB conversion, and PNG encoding in the optional `BambuLab.X1Camera.Imaging` package.
 - Transitive package dependencies: None. The .NET SDK supplies framework and build-time components.
 - Reviewed: 2026-08-24
 
