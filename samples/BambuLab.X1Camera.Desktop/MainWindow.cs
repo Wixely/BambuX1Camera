@@ -1,5 +1,6 @@
 using System.Net.Security;
 using Avalonia.Controls;
+using Avalonia.Platform;
 
 namespace BambuLab.X1Camera.Desktop;
 
@@ -15,6 +16,11 @@ internal sealed class MainWindow : Window
     public MainWindow()
     {
         Title = "Bambu X1 Camera";
+        using (var iconStream = AssetLoader.Open(new Uri("avares://BambuLab.X1Camera.Desktop/Assets/app-icon.png")))
+        {
+            Icon = new WindowIcon(iconStream);
+        }
+
         Width = 960;
         Height = 680;
         MinWidth = 620;

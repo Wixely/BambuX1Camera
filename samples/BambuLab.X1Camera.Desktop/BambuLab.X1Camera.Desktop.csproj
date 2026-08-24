@@ -5,7 +5,7 @@
     <AssemblyName>BambuLab.X1Camera.Desktop</AssemblyName>
     <RootNamespace>BambuLab.X1Camera.Desktop</RootNamespace>
     <ApplicationTitle>Bambu X1 Camera</ApplicationTitle>
-    <ApplicationIcon />
+    <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
     <PackageId>BambuLab.X1Camera.Desktop</PackageId>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
@@ -23,6 +23,10 @@
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\app-icon.png" />
   </ItemGroup>
 
   <ItemGroup>

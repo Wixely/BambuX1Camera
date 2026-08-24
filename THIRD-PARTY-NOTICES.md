@@ -16,6 +16,16 @@ The release's `CabacInitTable.cs` header and `LICENSE-3RDPARTY.md` attribute its
 
 The deterministic neutral 16x16 Annex-B fixture embedded in the protocol specifications was generated with `H264Sharp.Encoder` at the same tagged release and commit. The encoder is MIT-licensed, depends only on `H264Sharp.Decoder`, and is not a package dependency of this repository.
 
+## Application icon
+
+- Source: Text-only generation using OpenAI built-in image generation; no input images or third-party marks were used.
+- Generated: 2026-08-24
+- Purpose: Executable and Avalonia window icon for the desktop sample.
+- License: Distributed as a project-owned asset under MIT.
+- Provenance and prompts: `samples/BambuLab.X1Camera.Desktop/Assets/README.md`
+
+The generated source was resampled into the committed metadata-free PNG and multi-resolution ICO using the platform `System.Drawing` APIs. No image-generation or conversion tool is shipped with the project.
+
 ## Avalonia Desktop 12.1.1
 
 - Source: <https://github.com/AvaloniaUI/Avalonia/tree/12.1.1>
