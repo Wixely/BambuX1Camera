@@ -41,8 +41,8 @@ function Remove-AbsolutePdbPaths {
 }
 
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$desktopArtifactRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts\desktop'))
-$releaseArtifactRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts\release'))
+$desktopArtifactRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts/desktop'))
+$releaseArtifactRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts/release'))
 $releasePrefix = $releaseArtifactRoot.TrimEnd(
     [IO.Path]::DirectorySeparatorChar,
     [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
@@ -68,8 +68,8 @@ if ($LASTEXITCODE -ne 0) {
 
 New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
 $assetBaseName = "BambuLab.X1Camera.Desktop-$Version"
-$windowsSource = Join-Path $desktopArtifactRoot 'win-x64\BambuLab.X1Camera.Desktop.exe'
-$linuxSource = Join-Path $desktopArtifactRoot 'linux-x64\BambuLab.X1Camera.Desktop'
+$windowsSource = Join-Path $desktopArtifactRoot 'win-x64/BambuLab.X1Camera.Desktop.exe'
+$linuxSource = Join-Path $desktopArtifactRoot 'linux-x64/BambuLab.X1Camera.Desktop'
 $windowsAsset = Join-Path $releaseDirectory "$assetBaseName-win-x64.exe"
 $linuxAsset = Join-Path $releaseDirectory "$assetBaseName-linux-x64"
 
@@ -96,7 +96,7 @@ Copy-Item -LiteralPath (Join-Path $repositoryRoot 'LICENSE') -Destination $notic
 Copy-Item -LiteralPath (Join-Path $repositoryRoot 'THIRD-PARTY-NOTICES.md') -Destination $noticeStaging
 
 foreach ($runtime in @('win-x64', 'linux-x64')) {
-    $runtimeNoticeSource = Join-Path $desktopArtifactRoot "$runtime\licenses"
+    $runtimeNoticeSource = Join-Path $desktopArtifactRoot "$runtime/licenses"
     if (-not (Test-Path -LiteralPath $runtimeNoticeSource -PathType Container)) {
         throw "Required renderer notices were not published for $runtime."
     }
