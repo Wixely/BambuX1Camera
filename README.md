@@ -1,10 +1,10 @@
 # BambuLab.X1Camera
 
-Managed .NET 10 packages for the Bambu Lab X1-series LAN camera. The transport connects directly to the printer's authenticated RTSPS endpoint and emits H.264 NAL units or complete access units with Annex-B framing. The optional imaging package decodes the next keyframe into PNG entirely in managed code.
+Managed .NET 10 packages for integrating the Bambu Lab X1-series LAN camera into other applications. The primary deliverables are the packable `BambuLab.X1Camera` transport library and optional `BambuLab.X1Camera.Imaging` library. The transport connects directly to the printer's authenticated RTSPS endpoint and emits H.264 NAL units or complete access units with Annex-B framing; the imaging package decodes frames and still images in managed code.
 
 The core library does not use `bambu_networking.dll`, DirectShow, Media Foundation, FFmpeg, GStreamer, VLC, P/Invoke, Python, or Node.js. It remains decoder-free. `BambuLab.X1Camera.Imaging` adds pure-managed H.264 and PNG decoding through Wixely/H264Sharp.
 
-The intended product includes live video, still-image capture, GitHub Packages distribution, a host-neutral plugin boundary, and a basic viewer. See the [project plan](docs/PROJECT-PLAN.md) for the architecture, milestones, acceptance criteria, and unresolved release choices.
+The Avalonia desktop viewer and console probe are sample applications that demonstrate how a host can consume these packages. They are not the primary product and Avalonia is not required by applications using either NuGet package. See the [project plan](docs/PROJECT-PLAN.md) for the architecture, milestones, acceptance criteria, and unresolved release choices.
 
 The project is licensed under the [MIT License](LICENSE). Project code must be independently authored or sourced from MIT-licensed code; the Avalonia sample's native renderer closure is the only separately recorded dependency-policy exception. See the [dependency and source policy](docs/DEPENDENCY-POLICY.md).
 
@@ -45,11 +45,11 @@ dotnet run --project .\tests\BambuLab.X1Camera.Specs\BambuLab.X1Camera.Specs.csp
 
 The repository includes VS Code build and debug configuration. The default debug target runs the protocol specifications and never requests printer credentials.
 
-## Desktop application
+## Sample desktop application
 
 ![Avalonia desktop viewer showing a live printer camera stream](docs/images/desktop-viewer.png)
 
-The desktop viewer displaying a live stream. The private printer address and equipment label have been redacted from this screenshot.
+The non-packable Avalonia sample displaying a live stream. It demonstrates connection, decoding, display, and PNG capture using the reusable packages; applications can provide any user interface or consume the encoded H.264 without a UI. The private printer address and equipment label have been redacted from this screenshot.
 
 Start the Avalonia desktop client on Windows or Linux:
 
