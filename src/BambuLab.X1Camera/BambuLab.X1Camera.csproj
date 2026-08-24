@@ -12,6 +12,7 @@
     <PackageProjectUrl>https://github.com/Wixely/BambuX1Camera</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Wixely/BambuX1Camera.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageTags>bambu-lab;bambu;x1;camera;rtsp;rtp;h264</PackageTags>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <IncludeSymbols>true</IncludeSymbols>
