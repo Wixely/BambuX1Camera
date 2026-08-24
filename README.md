@@ -11,9 +11,10 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 ## Current status
 
 - Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, and FU-A packet handling.
+- Uses one RTSP reader to dispatch control responses by `CSeq` while feeding a bounded RTP queue. It acknowledges adaptive `OPTIONS` keepalives and teardown, exposes stream-health metrics, and reconnects established streams with a bounded retry policy.
 - Supports OS certificate validation or a configured SHA-256 certificate pin. The console probe can perform an explicit trust-on-first-use certificate observation without sending credentials, then pin the accepted certificate for the authenticated connection.
 - Includes dependency-free protocol specifications and an interactive console probe that supports timed tests and optional encoded Annex-B capture.
-- A 30-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, clean cancellation/disposal, and encoded H.264 output with repeated IDR frames. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
+- A 35-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, six adaptive keepalive acknowledgements, acknowledged teardown, and 901 encoded H.264 NAL units with no observed packet gaps, malformed packets, queue drops, or reconnects. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
 - Browser fMP4/WebCodecs delivery, still-image capture, the sample viewer, GitHub publishing, and the host plugin contract are planned next; they are not part of this initial slice.
 
 ## Build and verify
@@ -59,7 +60,9 @@ Remove-Item Env:BAMBU_X1_ACCESS_CODE
 ```csharp
 var options = new X1CameraOptions(host, accessCode)
 {
-    PinnedCertificateSha256 = certificateFingerprint
+    PinnedCertificateSha256 = certificateFingerprint,
+    ReconnectAttempts = 3,
+    FrameQueueCapacity = 256
 };
 
 await using var session = await new X1CameraClient().ConnectAsync(options, cancellationToken);
@@ -67,9 +70,11 @@ await foreach (var nalUnit in session.ReadNalUnitsAsync(cancellationToken))
 {
     // nalUnit.AnnexBData remains encoded H.264.
 }
+
+var metrics = session.Metrics;
 ```
 
-Only one reader is permitted per printer session. A plugin host should maintain one connection and fan out bounded copies or references to authorized consumers.
+Only one reader is permitted per printer session. `Metrics` is a thread-safe snapshot containing packet gaps, malformed or unexpected packets, bounded-queue drops, NAL output, reconnects, and acknowledged lifecycle requests. A plugin host should maintain one connection and fan out bounded copies or references to authorized consumers.
 
 ## Security
 

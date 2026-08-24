@@ -53,16 +53,21 @@ var options = new X1CameraOptions(settings.Host, settings.AccessCode)
 };
 
 var units = 0L;
+X1CameraSession? cameraSession = null;
 try
 {
-    await using var session = await new X1CameraClient().ConnectAsync(options, cancellation.Token);
+    cameraSession = await new X1CameraClient().ConnectAsync(options, cancellation.Token);
+    await using var sessionLifetime = cameraSession;
     await using var output = commandLine.OutputPath is null
         ? null
         : new FileStream(commandLine.OutputPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read, 64 * 1024, FileOptions.Asynchronous);
 
-    Console.WriteLine($"Connected: payload={session.PayloadType}, clock={session.ClockRate}.");
+    var timeoutText = cameraSession.ServerSessionTimeout is { } serverTimeout
+        ? $", session-timeout={serverTimeout.TotalSeconds:0}s"
+        : string.Empty;
+    Console.WriteLine($"Connected: payload={cameraSession.PayloadType}, clock={cameraSession.ClockRate}{timeoutText}.");
     Console.WriteLine(commandLine.Duration is null ? "Press Ctrl+C to stop." : $"Testing for {commandLine.Duration.Value.TotalSeconds:0} seconds.");
-    await foreach (var unit in session.ReadNalUnitsAsync(cancellation.Token))
+    await foreach (var unit in cameraSession.ReadNalUnitsAsync(cancellation.Token))
     {
         units++;
         if (output is not null)
@@ -88,6 +93,17 @@ catch (Exception exception)
 finally
 {
     Console.WriteLine($"NAL units received: {units}.");
+    if (cameraSession is not null)
+    {
+        var metrics = cameraSession.Metrics;
+        Console.WriteLine(
+            $"Transport: RTP={metrics.RtpPacketsReceived}, missing={metrics.MissingRtpPackets}, " +
+            $"out-of-order={metrics.OutOfOrderRtpPackets}, malformed={metrics.MalformedRtpPackets}, " +
+            $"dropped={metrics.InterleavedFramesDropped}, reconnects={metrics.Reconnects}, " +
+            $"keepalives={metrics.KeepAlivesAcknowledged}, keepalive-failures={metrics.KeepAliveFailures}, " +
+            $"last-keepalive-status={metrics.LastKeepAliveStatusCode}, teardowns={metrics.TeardownsAcknowledged}, " +
+            $"teardown-failures={metrics.TeardownFailures}, last-teardown-status={metrics.LastTeardownStatusCode}.");
+    }
 }
 
 return 0;

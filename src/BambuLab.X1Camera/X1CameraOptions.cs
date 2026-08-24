@@ -43,10 +43,34 @@ public sealed class X1CameraOptions
     /// <summary>Gets or sets the TCP connection timeout.</summary>
     public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
-    /// <summary>Gets or sets the RTSP keepalive interval.</summary>
+    /// <summary>
+    /// Gets or sets the maximum RTSP keepalive interval. When the server advertises a shorter session
+    /// timeout, the client uses half that timeout. Set to zero to disable keepalive requests.
+    /// </summary>
     public TimeSpan KeepAliveInterval { get; init; } = TimeSpan.FromSeconds(15);
 
+    /// <summary>Gets or sets the maximum number of automatic reconnection attempts after an established stream fails.</summary>
+    public int ReconnectAttempts { get; init; } = 3;
+
+    /// <summary>Gets or sets the delay before each automatic reconnection attempt.</summary>
+    public TimeSpan ReconnectDelay { get; init; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>Gets or sets the bounded number of interleaved RTSP frames buffered before new frames are dropped.</summary>
+    public int FrameQueueCapacity { get; init; } = 256;
+
+    /// <summary>Gets or sets the maximum time allowed for an acknowledged RTSP teardown during disposal.</summary>
+    public TimeSpan TeardownTimeout { get; init; } = TimeSpan.FromSeconds(5);
+
     internal Uri GetStreamUri()
+    {
+        Validate();
+        return new UriBuilder(Uri.UriSchemeHttps, Host, Port, StreamPath)
+        {
+            Scheme = "rtsps"
+        }.Uri;
+    }
+
+    internal void Validate()
     {
         if (Port is < 1 or > 65535)
         {
@@ -58,10 +82,35 @@ public sealed class X1CameraOptions
             throw new ArgumentException("The stream path must start with '/'.", nameof(StreamPath));
         }
 
-        return new UriBuilder(Uri.UriSchemeHttps, Host, Port, StreamPath)
+        if (ConnectTimeout <= TimeSpan.Zero)
         {
-            Scheme = "rtsps"
-        }.Uri;
+            throw new ArgumentOutOfRangeException(nameof(ConnectTimeout));
+        }
+
+        if (KeepAliveInterval < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(KeepAliveInterval));
+        }
+
+        if (ReconnectAttempts is < 0 or > 100)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ReconnectAttempts));
+        }
+
+        if (ReconnectDelay < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(ReconnectDelay));
+        }
+
+        if (FrameQueueCapacity is < 1 or > 4096)
+        {
+            throw new ArgumentOutOfRangeException(nameof(FrameQueueCapacity));
+        }
+
+        if (TeardownTimeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(TeardownTimeout));
+        }
     }
 
     internal string? GetNormalizedCertificatePin()

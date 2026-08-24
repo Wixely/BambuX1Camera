@@ -123,12 +123,13 @@ The viewer should provide:
 - [x] Implement the initial RTSPS, authentication, SDP, RTP, and H.264 depacketisation path. - Owner: agent
 - [x] Add bounded protocol specifications and VS Code debugging. - Owner: agent
 - [x] Add interactive probe configuration, optional encoded local settings, timed tests, and first-contact certificate pin confirmation. - Owner: agent
-- [ ] Complete hardware validation. A 30-second Windows run on 2026-08-24 confirmed TLS pinning, legacy Digest authentication, SDP, setup/playback, repeated IDR output, and clean cancellation/disposal; explicit keepalive/teardown response checks, interruption/restart, longer duration, and Linux remain. - Owner: agent
+- [ ] Complete hardware validation. A 35-second Windows run on 2026-08-24 confirmed TLS pinning, legacy Digest authentication, SDP, setup/playback, six keepalive acknowledgements scheduled from the server's 10-second timeout, acknowledged teardown, repeated IDR output, and zero observed packet gaps, malformed packets, queue drops, or reconnects. Interruption/restart, longer duration, and Linux remain. - Owner: agent
 - [ ] Capture sanitized protocol fixtures for deterministic regression tests. - Owner: TBD
 
 ### 0.2 - Reliable video
 
-- [ ] Add access-unit assembly, SPS/PPS handling, timestamp normalization, loss metrics, reconnect policy, and bounded fan-out. - Owner: TBD
+- [x] Add `CSeq` response dispatch, bounded interleaved-frame buffering, adaptive acknowledged keepalive/teardown, stream-health metrics, and bounded reconnect policy. - Owner: agent
+- [ ] Add access-unit assembly, SPS/PPS handling, timestamp normalization, and bounded fan-out. - Owner: TBD
 - [ ] Implement managed fragmented-MP4 remuxing without transcoding. - Owner: TBD
 - [ ] Prove 30-minute playback and repeated viewer connections on Windows and Linux browsers. - Owner: TBD
 
