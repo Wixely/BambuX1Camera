@@ -47,6 +47,10 @@ The repository includes VS Code build and debug configuration. The default debug
 
 ## Desktop application
 
+![Avalonia desktop viewer showing a live printer camera stream](docs/images/desktop-viewer.png)
+
+The desktop viewer displaying a live stream. The private printer address and equipment label have been redacted from this screenshot.
+
 Start the Avalonia desktop client on Windows or Linux:
 
 ```powershell
