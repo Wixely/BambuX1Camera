@@ -1,0 +1,85 @@
+using System.Diagnostics;
+
+namespace BambuLab.X1Camera;
+
+/// <summary>Connection and security settings for an X1-series LAN camera.</summary>
+[DebuggerDisplay("{Host}:{Port}{StreamPath}")]
+public sealed class X1CameraOptions
+{
+    /// <summary>Creates options for a printer host and LAN access code.</summary>
+    public X1CameraOptions(string host, string accessCode)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(host);
+        ArgumentException.ThrowIfNullOrWhiteSpace(accessCode);
+
+        Host = host;
+        AccessCode = accessCode;
+    }
+
+    /// <summary>Gets the printer DNS name or IP address.</summary>
+    public string Host { get; }
+
+    /// <summary>Gets the sensitive LAN access code. Applications must not log this value.</summary>
+    public string AccessCode { get; }
+
+    /// <summary>Gets or sets the RTSPS port.</summary>
+    public int Port { get; init; } = 322;
+
+    /// <summary>Gets or sets the RTSP stream path.</summary>
+    public string StreamPath { get; init; } = "/streaming/live/1";
+
+    /// <summary>
+    /// Gets or sets an optional SHA-256 server-certificate fingerprint. Separators and case are ignored.
+    /// When supplied, this pin is accepted even when the printer certificate is not trusted by the OS.
+    /// </summary>
+    public string? PinnedCertificateSha256 { get; init; }
+
+    /// <summary>
+    /// Gets or sets whether to accept any server certificate. This is unsafe and intended only for an
+    /// isolated first-contact diagnostic. It defaults to <see langword="false"/>.
+    /// </summary>
+    public bool AllowUntrustedCertificate { get; init; }
+
+    /// <summary>Gets or sets the TCP connection timeout.</summary>
+    public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
+
+    /// <summary>Gets or sets the RTSP keepalive interval.</summary>
+    public TimeSpan KeepAliveInterval { get; init; } = TimeSpan.FromSeconds(15);
+
+    internal Uri GetStreamUri()
+    {
+        if (Port is < 1 or > 65535)
+        {
+            throw new ArgumentOutOfRangeException(nameof(Port));
+        }
+
+        if (!StreamPath.StartsWith("/", StringComparison.Ordinal))
+        {
+            throw new ArgumentException("The stream path must start with '/'.", nameof(StreamPath));
+        }
+
+        return new UriBuilder(Uri.UriSchemeHttps, Host, Port, StreamPath)
+        {
+            Scheme = "rtsps"
+        }.Uri;
+    }
+
+    internal string? GetNormalizedCertificatePin()
+    {
+        if (string.IsNullOrWhiteSpace(PinnedCertificateSha256))
+        {
+            return null;
+        }
+
+        var normalized = string.Concat(PinnedCertificateSha256.Where(Uri.IsHexDigit)).ToUpperInvariant();
+        if (normalized.Length != 64)
+        {
+            throw new ArgumentException("The SHA-256 certificate fingerprint must contain 64 hexadecimal characters.", nameof(PinnedCertificateSha256));
+        }
+
+        return normalized;
+    }
+
+    /// <inheritdoc />
+    public override string ToString() => $"rtsps://{Host}:{Port}{StreamPath}";
+}

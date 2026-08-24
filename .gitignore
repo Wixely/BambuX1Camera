@@ -1,0 +1,10 @@
+bin/
+obj/
+artifacts/
+.vs/
+.vscode/*.user.json
+*.user
+*.suo
+*.h264
+*.264
+*.log

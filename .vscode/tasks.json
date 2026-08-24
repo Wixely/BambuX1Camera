@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/BambuX1Camera.slnx"],
+      "problemMatcher": "$msCompile",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "specs",
+      "type": "process",
+      "command": "dotnet",
+      "args": ["run", "--project", "${workspaceFolder}/tests/BambuLab.X1Camera.Specs/BambuLab.X1Camera.Specs.csproj"],
+      "problemMatcher": "$msCompile",
+      "group": "test"
+    }
+  ]
+}
+
