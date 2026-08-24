@@ -118,7 +118,7 @@ The viewer should provide:
 - [x] Implement the initial RTSPS, authentication, SDP, RTP, and H.264 depacketisation path. - Owner: agent
 - [x] Add bounded protocol specifications and VS Code debugging. - Owner: agent
 - [x] Add interactive probe configuration, optional encoded local settings, timed tests, and first-contact certificate pin confirmation. - Owner: agent
-- [ ] Complete hardware validation. A 35-second Windows run on 2026-08-24 confirmed TLS pinning, legacy Digest authentication, SDP, setup/playback, six keepalive acknowledgements scheduled from the server's 10-second timeout, acknowledged teardown, repeated IDR output, and zero observed packet gaps, malformed packets, queue drops, or reconnects. Interruption/restart, longer duration, and Linux remain. - Owner: agent
+- [ ] Complete hardware validation. A 35-second Windows run on 2026-08-24 confirmed TLS pinning, legacy Digest authentication, SDP, setup/playback, six keepalive acknowledgements scheduled from the server's 10-second timeout, acknowledged teardown, repeated IDR output, and zero observed packet gaps, malformed packets, queue drops, or reconnects. An eight-second Linux run streamed successfully and a separate Linux capture produced a valid PNG. Interruption/restart and longer-duration Linux validation remain. - Owner: agent
 - [ ] Capture sanitized protocol fixtures for deterministic regression tests. - Owner: TBD
 
 ### 0.2 - Reliable video
@@ -141,7 +141,7 @@ The viewer should provide:
 
 - [x] Build the Avalonia connection page with masked input, certificate-pin confirmation, optional encoded settings, and viewer navigation. - Owner: agent
 - [x] Add bounded GOP decoding, RGB24 video display, drop/reconnect status, and PNG capture to the Avalonia viewer. A physical Windows run on 2026-08-24 reached the viewer and displayed decoded video. - Owner: agent
-- [ ] Add portable self-contained Windows and Linux publish profiles and verify them on available platforms. - Owner: agent
+- [x] Add portable self-contained single-file Windows and Linux publishing and verify graphical startup on Windows and WSLg. - Owner: agent
 - [ ] Extract the smallest host-neutral plugin contract after both video and still APIs are proven. - Owner: TBD
 - [ ] Add security, reconnect, malformed-input, and multi-consumer tests. - Owner: TBD
 

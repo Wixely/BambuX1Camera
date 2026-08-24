@@ -10,6 +10,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
@@ -19,4 +29,31 @@
     <ProjectReference Include="..\..\src\BambuLab.X1Camera\BambuLab.X1Camera.csproj" />
     <ProjectReference Include="..\..\src\BambuLab.X1Camera.Imaging\BambuLab.X1Camera.Imaging.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE" Link="LICENSE" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+    <None Include="$(NuGetPackageRoot)avalonia.angle.windows.natives/2.1.27548.20260419/LICENSE" Link="licenses/ANGLE-LICENSE.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)skiasharp.nativeassets.win32/3.119.4/LICENSE.txt" Link="licenses/SkiaSharp-Native-LICENSE.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)skiasharp.nativeassets.win32/3.119.4/THIRD-PARTY-NOTICES.txt" Link="licenses/SkiaSharp-Native-THIRD-PARTY-NOTICES.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.win32/8.3.1.3/LICENSE.txt" Link="licenses/HarfBuzzSharp-Native-LICENSE.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.win32/8.3.1.3/THIRD-PARTY-NOTICES.txt" Link="licenses/HarfBuzzSharp-Native-THIRD-PARTY-NOTICES.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <None Include="$(NuGetPackageRoot)skiasharp.nativeassets.linux/3.119.4/LICENSE.txt" Link="licenses/SkiaSharp-Native-LICENSE.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)skiasharp.nativeassets.linux/3.119.4/THIRD-PARTY-NOTICES.txt" Link="licenses/SkiaSharp-Native-THIRD-PARTY-NOTICES.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.linux/8.3.1.3/LICENSE.txt" Link="licenses/HarfBuzzSharp-Native-LICENSE.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.linux/8.3.1.3/THIRD-PARTY-NOTICES.txt" Link="licenses/HarfBuzzSharp-Native-THIRD-PARTY-NOTICES.txt" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
+  <Target Name="RemovePortablePublishSymbols" AfterTargets="Publish" Condition="'$(RuntimeIdentifier)' != ''">
+    <ItemGroup>
+      <PortablePublishSymbols Include="$(PublishDir)**\*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(PortablePublishSymbols)" />
+  </Target>
 </Project>

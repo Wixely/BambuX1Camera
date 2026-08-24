@@ -16,6 +16,19 @@
       "args": ["run", "--project", "${workspaceFolder}/tests/BambuLab.X1Camera.Specs/BambuLab.X1Camera.Specs.csproj"],
       "problemMatcher": "$msCompile",
       "group": "test"
+    },
+    {
+      "label": "publish desktop",
+      "type": "process",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/scripts/Publish-Desktop.ps1"
+      ],
+      "problemMatcher": "$msCompile"
     }
   ]
 }

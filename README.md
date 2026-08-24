@@ -18,7 +18,8 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 - A subsequent 10-second hardware run validated the access-unit API with 239 complete encoded frames, repeated SPS/PPS-equipped IDR output, normalized presentation times, acknowledged keepalive and teardown, and no observed packet gaps, malformed packets, queue drops, or reconnects.
 - A hardware still-capture run decoded the next IDR through H264Sharp into a structurally and visually validated 1760x1080 PNG, without retaining the private image in the repository.
 - A physical Windows desktop run connected, navigated to the viewer, batch-decoded a bounded GOP through H264Sharp, and displayed an RGB24 frame. The temporary ignored settings copy used for that test was deleted afterward.
-- Portable publishing, Linux runtime validation, GitHub publishing, and the host plugin contract remain planned.
+- Self-contained single-file Windows and Linux desktop artifacts both passed graphical startup tests. A separate Linux physical-device run streamed for eight seconds and captured a valid PNG through H264Sharp. Longer-duration Linux desktop video validation remains planned.
+- GitHub publishing and the host plugin contract remain planned.
 
 ## Build and verify
 
@@ -44,6 +45,20 @@ dotnet run --project .\samples\BambuLab.X1Camera.Desktop\BambuLab.X1Camera.Deskt
 Enter the printer address and LAN access code. Before sending credentials, the application observes the printer TLS certificate and requires an explicit trust decision if the operating system does not trust it. A successful connection opens a separate viewer page that batch-decodes bounded H.264 GOPs off the UI thread. The capture button decodes the next complete keyframe and opens the platform PNG save picker.
 
 Saving is optional. When enabled, the application writes the compatible `bambu-x1-camera.settings.json` file beside its executable. Values are Base64-encoded UTF-8 rather than encrypted; this prevents accidental plaintext disclosure but does not protect against a user or process that can read the file.
+
+Create self-contained single-file builds for 64-bit Windows and Linux:
+
+```powershell
+.\scripts\Publish-Desktop.ps1
+```
+
+Outputs are written beneath `artifacts/desktop/win-x64` and `artifacts/desktop/linux-x64`. Each platform directory contains its single-file executable, XML API documentation, project-level notices, and the exact native renderer notices under `licenses/`. The application does not require a separately installed .NET runtime. Native renderer libraries are extracted to the platform temporary directory when the single-file application starts.
+
+Linux requires a graphical desktop with X11 or XWayland and Avalonia's documented system packages. On Debian or Ubuntu:
+
+```bash
+sudo apt install libx11-6 libice6 libsm6 libfontconfig1
+```
 
 ## Probe a printer
 
