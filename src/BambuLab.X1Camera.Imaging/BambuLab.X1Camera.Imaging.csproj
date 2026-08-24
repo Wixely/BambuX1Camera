@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>BambuLab.X1Camera.Imaging</AssemblyName>
+    <RootNamespace>BambuLab.X1Camera.Imaging</RootNamespace>
+    <Description>Managed H.264 still-image capture for BambuLab.X1Camera.</Description>
+    <PackageId>BambuLab.X1Camera.Imaging</PackageId>
+    <Version>0.1.0-alpha.1</Version>
+    <Authors>Wixely</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BambuLab.X1Camera\BambuLab.X1Camera.csproj" />
+    <PackageReference Include="H264Sharp.Decoder" Version="1.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

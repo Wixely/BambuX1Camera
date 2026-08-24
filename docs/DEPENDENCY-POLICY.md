@@ -33,5 +33,14 @@ Before adding or updating any dependency, asset, workflow action, copied snippet
 - Reject the component if its license, provenance, generated contents, or transitive closure cannot be established.
 - Re-run the license check before each package release.
 
-An exception requires a new explicit user decision that supersedes this policy. Until then, there are no exceptions.
+An exception requires a new explicit user decision that supersedes this policy.
+
+## Temporary approved exception
+
+- Component: `H264Sharp.Decoder` 1.0.2
+- Scope: The generated CABAC initialization table attributed by H264Sharp to BSD-2-Clause OpenH264.
+- Decision: The user explicitly approved using the current package temporarily on 2026-08-24 while H264Sharp's table provenance is corrected.
+- Boundary: This does not permit any other non-MIT dependency, copied source, asset, tool, or generated input.
+- Required follow-up: Upgrade to the corrected H264Sharp release, repeat the dependency audit, update `THIRD-PARTY-NOTICES.md`, and remove this exception before a supported package release.
+- Review date: 2026-09-30
 

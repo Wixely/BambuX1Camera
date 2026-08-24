@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\BambuLab.X1Camera\BambuLab.X1Camera.csproj" />
+    <ProjectReference Include="..\..\src\BambuLab.X1Camera.Imaging\BambuLab.X1Camera.Imaging.csproj" />
   </ItemGroup>
 </Project>
 

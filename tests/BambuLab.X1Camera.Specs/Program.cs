@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Text;
 using System.Threading.Channels;
 using BambuLab.X1Camera;
+using BambuLab.X1Camera.Imaging;
 using BambuLab.X1Camera.Probe;
 using BambuLab.X1Camera.Protocol;
 
@@ -16,6 +17,7 @@ var specifications = new (string Name, Func<Task> Run)[]
     ("access units group NALs and inject cached parameter sets", AccessUnitsGroupAndInjectParameterSets),
     ("access-unit timestamps handle RTP wraparound", AccessUnitTimestampsHandleWraparound),
     ("access-unit assembly is bounded and recovers", AccessUnitAssemblyIsBounded),
+    ("H264Sharp still decoder produces a valid PNG", H264SharpStillDecoderProducesPng),
     ("SDP parser discovers the H264 video track", SdpParserDiscoversH264Track),
     ("RTSP wire reader separates responses and interleaved frames", RtspWireReaderSeparatesFrames),
     ("digest authentication does not disclose the access code", DigestAuthenticationDoesNotDiscloseAccessCode),
@@ -176,6 +178,32 @@ static Task AccessUnitAssemblyIsBounded()
     AssertEx.True(recovered is not null);
     AssertEx.True(recovered!.Discontinuity);
     AssertEx.SequenceEqual(new byte[] { 0, 0, 0, 1, 0x61, 7 }, recovered.AnnexBData.Span);
+    return Task.CompletedTask;
+}
+
+static Task H264SharpStillDecoderProducesPng()
+{
+    var encoded = Convert.FromBase64String("AAAAAWdC4B7acQAAAAFozjyAAAAAAWWIhAiieA==");
+    var accessUnit = new H264AccessUnit(
+        encoded,
+        1234,
+        TimeSpan.FromMilliseconds(25),
+        3,
+        3,
+        isKeyFrame: true,
+        hasSequenceParameterSet: true,
+        hasPictureParameterSet: true,
+        discontinuity: false);
+
+    var image = new X1CameraPngDecoder().Decode(accessUnit);
+    AssertEx.Equal(16, image.Width);
+    AssertEx.Equal(16, image.Height);
+    AssertEx.Equal("image/png", image.MediaType);
+    AssertEx.Equal((uint)1234, image.RtpTimestamp);
+    AssertEx.Equal(TimeSpan.FromMilliseconds(25), image.PresentationTime);
+    AssertEx.SequenceEqual(new byte[] { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a }, image.Data.Span[..8]);
+    AssertEx.Equal(16, BinaryPrimitives.ReadInt32BigEndian(image.Data.Span.Slice(16, 4)));
+    AssertEx.Equal(16, BinaryPrimitives.ReadInt32BigEndian(image.Data.Span.Slice(20, 4)));
     return Task.CompletedTask;
 }
 

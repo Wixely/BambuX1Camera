@@ -39,13 +39,13 @@ Managed transport and parser
         +--> Frame-decoder abstraction --> JPEG/PNG still image
 ```
 
-The transport, authentication, SDP, RTP, H.264 parsing, reconnection, and fMP4 remux layers should remain managed and platform-neutral. H.264 pixel decoding is a separate capability because a maintained production-quality pure-C# decoder has not been identified.
+The transport, authentication, SDP, RTP, H.264 parsing, reconnection, and fMP4 remux layers remain managed and platform-neutral. H.264 pixel decoding is a separate package capability implemented with Wixely/H264Sharp.
 
-The recommended still-image design is an explicit decoder abstraction rather than quietly introducing a platform dependency into the core package:
+The still-image design keeps decoding in an explicit optional package rather than introducing it into the core transport package:
 
 - The browser viewer uses the browser's H.264 decoder and captures a displayed frame for download.
-- A library-level `CaptureStillAsync` API uses an injected decoder implementation and returns an encoded JPEG or PNG plus timestamp, dimensions, and content type.
-- If headless still capture is required, publish an optional cross-platform decoder package only if its code, native binaries, and complete dependency graph are verified as MIT-licensed. Do not place native decoder binaries in the transport package.
+- A library-level `CapturePngAsync` API in the imaging package waits for a complete IDR and returns PNG bytes, timestamp, dimensions, and content type.
+- Headless still capture uses the optional pure-managed H264Sharp decoder package. H264Sharp 1.0.2 has no transitive package dependencies, but its BSD-attributed CABAC table is covered by the temporary user-approved exception recorded in the dependency policy and must be replaced by a corrected release before supported publication.
 - During the hardware spike, check whether the current X1C firmware exposes a usable native still-image path. Prefer it if verified, but do not assume one exists.
 
 ## Proposed deliverables
@@ -76,10 +76,10 @@ This may remain part of the core package if the public API stays small. Split it
 
 Working package name: `BambuLab.X1Camera.Imaging`.
 
-- `CaptureStillAsync` returning a JPEG or PNG result with timestamp, dimensions, and media type.
-- `IX1CameraFrameDecoder` abstraction so decoding policy is explicit.
+- `CapturePngAsync` returning a PNG result with timestamp, dimensions, and media type.
+- `X1CameraPngDecoder` for decoding a keyframe supplied by a host-managed fan-out pipeline.
 - A browser-backed implementation for the sample viewer.
-- An optional headless decoder implementation only if it satisfies the MIT-only source policy and its runtime, binary provenance, and Windows/Linux support are verified.
+- Pure-managed headless decoding through H264Sharp, pending the recorded provenance correction and Linux verification.
 
 ### Plugin boundary
 
@@ -137,9 +137,11 @@ The viewer should provide:
 ### 0.3 - Still images
 
 - [ ] Confirm whether the tested X1C firmware offers a native still endpoint. - Owner: TBD
-- [ ] Define the decoder abstraction and still-image result contract. - Owner: TBD
+- [x] Define the PNG still-image result contract and optional imaging-package boundary. - Owner: agent
+- [x] Implement `CapturePngAsync` and `X1CameraPngDecoder` using H264Sharp. A Windows hardware run on 2026-08-24 decoded and visually validated a 1760x1080 frame; the private test image was not retained. - Owner: agent
 - [ ] Implement browser-backed JPEG/PNG capture. - Owner: TBD
-- [ ] Decide whether headless still capture is required for the first release; if so, select and audit an optional decoder. - Owner: TBD
+- [x] Select H264Sharp for headless still capture and audit version 1.0.2. A narrow temporary BSD-table exception was approved by the user on 2026-08-24. - Owner: user and agent
+- [ ] Upgrade to the corrected H264Sharp release and remove the temporary dependency-policy exception. - Owner: user and agent - Review: 2026-09-30
 
 ### 0.4 - Viewer and plugin contract
 
@@ -171,7 +173,7 @@ The viewer should provide:
 ## Open decisions
 
 - Which GitHub owner and repository will host the source and packages, and will each be public or private?
-- Is headless JPEG/PNG capture required in the first release, or is browser-backed still capture sufficient initially?
+- Should the first package release expose only PNG, or add JPEG after the PNG API and viewer are stable?
 - Which plugin host should define the first compatibility target?
 - Which exact X1C firmware, camera settings, and network isolation model form the supported test matrix?
 - Is macOS support required, or should the first release claim only verified Windows and Linux support?

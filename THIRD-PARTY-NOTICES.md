@@ -1,6 +1,20 @@
 # Third-party notices
 
-No third-party code or packaged dependencies are currently included in this repository.
+## H264Sharp.Decoder 1.0.2
 
-The project targets the .NET platform but does not redistribute its source as part of the library package. Future dependencies and shipped tools must satisfy [the MIT-only dependency policy](docs/DEPENDENCY-POLICY.md) before inclusion.
+- Source: <https://github.com/Wixely/H264Sharp/tree/v1.0.2>
+- Package source: <https://nuget.pkg.github.com/Wixely/index.json>
+- Package ID: `H264Sharp.Decoder`
+- Version: `1.0.2`
+- Release commit: `42019859ba0de5cd8290cbfc71f2e28751edfe37`
+- Primary license: MIT
+- Purpose: Pure-managed H.264 keyframe decoding, YUV-to-RGB conversion, and PNG encoding in the optional `BambuLab.X1Camera.Imaging` package.
+- Transitive package dependencies: None. The .NET SDK supplies framework and build-time components.
+- Reviewed: 2026-08-24
+
+The release's `CabacInitTable.cs` header and `LICENSE-3RDPARTY.md` attribute its generated CABAC initialization values to Cisco OpenH264 under BSD-2-Clause. On 2026-08-24, the user approved a temporary, narrowly scoped exception to this repository's MIT-only policy for that table while H264Sharp's provenance is corrected. Upgrade to the corrected H264Sharp release and remove this exception before a supported package release.
+
+The deterministic neutral 16x16 Annex-B fixture embedded in the protocol specifications was generated with `H264Sharp.Encoder` at the same tagged release and commit. The encoder is MIT-licensed, depends only on `H264Sharp.Decoder`, and is not a package dependency of this repository.
+
+The project targets the .NET platform but does not redistribute its source as part of the library package.
 

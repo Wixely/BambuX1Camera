@@ -1,8 +1,8 @@
 # BambuLab.X1Camera
 
-Managed .NET 10 transport for the Bambu Lab X1-series LAN camera. The library connects directly to the printer's authenticated RTSPS endpoint, reads interleaved RTP, and emits H.264 NAL units with Annex-B framing.
+Managed .NET 10 packages for the Bambu Lab X1-series LAN camera. The transport connects directly to the printer's authenticated RTSPS endpoint and emits H.264 NAL units or complete access units with Annex-B framing. The optional imaging package decodes the next keyframe into PNG entirely in managed code.
 
-The core library does not use `bambu_networking.dll`, DirectShow, Media Foundation, FFmpeg, GStreamer, VLC, P/Invoke, Python, or Node.js. It does not decode H.264 into pixels; a browser or an optional platform codec should own that boundary.
+The core library does not use `bambu_networking.dll`, DirectShow, Media Foundation, FFmpeg, GStreamer, VLC, P/Invoke, Python, or Node.js. It remains decoder-free. `BambuLab.X1Camera.Imaging` adds pure-managed H.264 and PNG decoding through Wixely/H264Sharp.
 
 The intended product includes live video, still-image capture, GitHub Packages distribution, a host-neutral plugin boundary, and a basic viewer. See the [project plan](docs/PROJECT-PLAN.md) for the architecture, milestones, acceptance criteria, and unresolved release choices.
 
@@ -13,14 +13,17 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 - Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, FU-A, and complete access-unit assembly.
 - Uses one RTSP reader to dispatch control responses by `CSeq` while feeding a bounded RTP queue. It acknowledges adaptive `OPTIONS` keepalives and teardown, exposes stream-health metrics, and reconnects established streams with a bounded retry policy.
 - Supports OS certificate validation or a configured SHA-256 certificate pin. The console probe can perform an explicit trust-on-first-use certificate observation without sending credentials, then pin the accepted certificate for the authenticated connection.
-- Includes dependency-free protocol specifications and an interactive console probe that supports timed tests and optional encoded Annex-B capture.
+- Includes bounded protocol specifications and an interactive console probe that supports timed tests, optional encoded Annex-B capture, and PNG still capture.
 - A 35-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, six adaptive keepalive acknowledgements, acknowledged teardown, and 901 encoded H.264 NAL units with no observed packet gaps, malformed packets, queue drops, or reconnects. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
 - A subsequent 10-second hardware run validated the access-unit API with 239 complete encoded frames, repeated SPS/PPS-equipped IDR output, normalized presentation times, acknowledged keepalive and teardown, and no observed packet gaps, malformed packets, queue drops, or reconnects.
-- Browser fMP4/WebCodecs delivery, still-image capture, the sample viewer, GitHub publishing, and the host plugin contract are planned next; they are not part of this initial slice.
+- A hardware still-capture run decoded the next IDR through H264Sharp into a structurally and visually validated 1760x1080 PNG, without retaining the private image in the repository.
+- Browser fMP4/WebCodecs delivery, bounded fan-out, the sample viewer, GitHub publishing, and the host plugin contract remain planned.
 
 ## Build and verify
 
 Requirements: .NET SDK 10.0.300 or a later 10.0 patch.
+
+`BambuLab.X1Camera.Imaging` depends on `H264Sharp.Decoder` 1.0.2 from Wixely's GitHub Packages feed. GitHub currently requires authentication even for public packages. Configure that feed with a token carrying `read:packages` before a clean restore; do not commit the token. The repository's `NuGet.config` contains only the public feed URL.
 
 ```powershell
 dotnet build .\BambuX1Camera.slnx
@@ -39,7 +42,7 @@ Enable LAN live view on the printer, build the solution, and start the probe int
 
 The probe masks access-code input. When no certificate pin is available, it observes the certificate without sending credentials and asks before trusting and pinning it. It then offers to save the printer address, access code, and certificate pin in `bambu-x1-camera.settings.json` beside the executable. Values are Base64-encoded UTF-8: this is reversible encoding, not encryption. Saving is opt-in and the filename is ignored by Git.
 
-Later runs load that file automatically. Use `--configure` to replace it, `--duration N` for a bounded test, and `--output capture.h264` to save the encoded Annex-B stream. Capture output uses `FileMode.CreateNew` so it cannot silently overwrite an existing file.
+Later runs load that file automatically. Use `--configure` to replace it, `--duration N` for a bounded test, `--output capture.h264` to save the encoded Annex-B stream, or `--png still.png` to decode the next keyframe. Capture output uses `FileMode.CreateNew` so it cannot silently overwrite an existing file.
 
 Environment variables remain available for automation and take precedence over the saved file:
 
@@ -81,6 +84,18 @@ await foreach (var accessUnit in session.ReadAccessUnitsAsync(cancellationToken)
 var metrics = session.Metrics;
 ```
 
+Install the optional imaging package and capture a still from a fresh session:
+
+```csharp
+using BambuLab.X1Camera.Imaging;
+
+await using var session = await new X1CameraClient().ConnectAsync(options, cancellationToken);
+var image = await session.CapturePngAsync(cancellationToken);
+await File.WriteAllBytesAsync("still.png", image.Data, cancellationToken);
+```
+
+`CapturePngAsync` owns the session's single reader until it returns. Applications that need simultaneous still capture and live forwarding should read `ReadAccessUnitsAsync` once, fan out through bounded application queues, and pass a keyframe to `X1CameraPngDecoder.Decode`.
+
 Only one reader is permitted per printer session, using either the NAL or access-unit API. Access units are bounded, carry normalized presentation time across normal 32-bit RTP wraparound, and flag discontinuities so a decoder or restreamer can reset and wait for a keyframe. `Metrics` is a thread-safe snapshot containing packet gaps, malformed or unexpected packets, bounded-queue drops, NAL output, reconnects, and acknowledged lifecycle requests. A plugin host should maintain one connection and fan out bounded copies or references to authorized consumers.
 
 ## Security
@@ -94,3 +109,5 @@ Only one reader is permitted per printer session, using either the NAL or access
 ## Project boundaries
 
 This folder is currently a local source project with no remote. It is MIT-licensed, but the GitHub owner, repository visibility, package visibility, and publication timing have not been selected. Do not publish it until those choices are explicit and the pre-push review is complete.
+
+H264Sharp 1.0.2 is MIT-licensed but currently attributes one generated CABAC initialization table to BSD-2-Clause OpenH264. The user approved a narrow temporary exception for that table while H264Sharp's provenance is corrected. This dependency must be upgraded and the exception removed before a supported package release; see [the dependency policy](docs/DEPENDENCY-POLICY.md) and [third-party notices](THIRD-PARTY-NOTICES.md).

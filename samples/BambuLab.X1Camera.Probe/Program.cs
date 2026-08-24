@@ -1,5 +1,6 @@
 using System.Net.Security;
 using BambuLab.X1Camera;
+using BambuLab.X1Camera.Imaging;
 using BambuLab.X1Camera.Probe;
 
 ProbeCommandLine commandLine;
@@ -53,6 +54,7 @@ var options = new X1CameraOptions(settings.Host, settings.AccessCode)
 };
 
 var accessUnits = 0L;
+var stillCaptured = false;
 X1CameraSession? cameraSession = null;
 try
 {
@@ -66,20 +68,38 @@ try
         ? $", session-timeout={serverTimeout.TotalSeconds:0}s"
         : string.Empty;
     Console.WriteLine($"Connected: payload={cameraSession.PayloadType}, clock={cameraSession.ClockRate}{timeoutText}.");
-    Console.WriteLine(commandLine.Duration is null ? "Press Ctrl+C to stop." : $"Testing for {commandLine.Duration.Value.TotalSeconds:0} seconds.");
-    await foreach (var accessUnit in cameraSession.ReadAccessUnitsAsync(cancellation.Token))
+    if (commandLine.PngPath is not null)
     {
-        accessUnits++;
-        if (output is not null)
+        Console.WriteLine("Waiting for a complete keyframe to decode.");
+        var image = await cameraSession.CapturePngAsync(cancellation.Token);
+        await using var pngOutput = new FileStream(
+            commandLine.PngPath,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.Read,
+            64 * 1024,
+            FileOptions.Asynchronous);
+        await pngOutput.WriteAsync(image.Data, cancellation.Token);
+        stillCaptured = true;
+        Console.WriteLine($"Saved {image.Width}x{image.Height} PNG still.");
+    }
+    else
+    {
+        Console.WriteLine(commandLine.Duration is null ? "Press Ctrl+C to stop." : $"Testing for {commandLine.Duration.Value.TotalSeconds:0} seconds.");
+        await foreach (var accessUnit in cameraSession.ReadAccessUnitsAsync(cancellation.Token))
         {
-            await output.WriteAsync(accessUnit.AnnexBData, cancellation.Token);
-        }
+            accessUnits++;
+            if (output is not null)
+            {
+                await output.WriteAsync(accessUnit.AnnexBData, cancellation.Token);
+            }
 
-        if (accessUnit.IsKeyFrame || accessUnits % 300 == 0)
-        {
-            Console.WriteLine(
-                $"Access units: {accessUnits}; keyframe: {accessUnit.IsKeyFrame}; " +
-                $"NALs: {accessUnit.NalUnitCount}; presentation time: {accessUnit.PresentationTime}");
+            if (accessUnit.IsKeyFrame || accessUnits % 300 == 0)
+            {
+                Console.WriteLine(
+                    $"Access units: {accessUnits}; keyframe: {accessUnit.IsKeyFrame}; " +
+                    $"NALs: {accessUnit.NalUnitCount}; presentation time: {accessUnit.PresentationTime}");
+            }
         }
     }
 }
@@ -94,7 +114,7 @@ catch (Exception exception)
 }
 finally
 {
-    Console.WriteLine($"Access units received: {accessUnits}.");
+    Console.WriteLine(stillCaptured ? "PNG still captured." : $"Access units received: {accessUnits}.");
     if (cameraSession is not null)
     {
         var metrics = cameraSession.Metrics;
