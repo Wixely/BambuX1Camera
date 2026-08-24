@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Text;
 using System.Threading.Channels;
 using BambuLab.X1Camera;
+using BambuLab.X1Camera.Desktop;
 using BambuLab.X1Camera.Imaging;
 using BambuLab.X1Camera.Probe;
 using BambuLab.X1Camera.Protocol;
@@ -25,6 +26,7 @@ var specifications = new (string Name, Func<Task> Run)[]
     ("legacy digest omits an unchallenged algorithm", LegacyDigestOmitsUnchallengedAlgorithm),
     ("digest echoes an explicitly challenged MD5 algorithm", DigestEchoesExplicitMd5Algorithm),
     ("probe settings round-trip without plaintext values", ProbeSettingsRoundTripWithoutPlaintext),
+    ("desktop settings round-trip without plaintext values", DesktopSettingsRoundTripWithoutPlaintext),
     ("RTSP connection matches concurrent responses by CSeq", RtspConnectionMatchesResponsesByCSeq),
     ("RTSP connection drops frames at its bounded capacity", RtspConnectionDropsFramesAtCapacity),
     ("stream metrics count RTP sequence gaps", StreamMetricsCountSequenceGaps),
@@ -571,6 +573,35 @@ static RtpPacket ParseRtp(ushort sequence, uint timestamp, bool marker, byte[] p
     var bytes = CreateRtpPacketBytes(sequence, timestamp, marker, payload);
     AssertEx.True(RtpPacket.TryParse(bytes, out var packet));
     return packet;
+}
+
+static async Task DesktopSettingsRoundTripWithoutPlaintext()
+{
+    const string host = "desktop-printer.invalid";
+    const string accessCode = "desktop-test-code";
+    const string certificatePin = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+    var path = Path.Combine(Path.GetTempPath(), $"bambu-x1-camera-desktop-settings-{Guid.NewGuid():N}.json");
+    try
+    {
+        var settings = new DesktopSettings(host, accessCode, certificatePin, 322);
+        await DesktopSettingsStore.SaveAsync(path, settings, CancellationToken.None);
+
+        var stored = await File.ReadAllTextAsync(path);
+        AssertEx.False(stored.Contains(host, StringComparison.Ordinal));
+        AssertEx.False(stored.Contains(accessCode, StringComparison.Ordinal));
+        AssertEx.False(stored.Contains(certificatePin, StringComparison.Ordinal));
+
+        var loaded = await DesktopSettingsStore.LoadAsync(path, CancellationToken.None);
+        AssertEx.Equal(host, loaded.Host);
+        AssertEx.Equal(accessCode, loaded.AccessCode);
+        AssertEx.Equal(certificatePin, loaded.CertificateSha256);
+        AssertEx.Equal(322, loaded.Port);
+        AssertEx.Equal(nameof(DesktopSettings), loaded.ToString());
+    }
+    finally
+    {
+        File.Delete(path);
+    }
 }
 
 static X1CameraConnectionState CreateConnectionStateForStream(Stream stream)

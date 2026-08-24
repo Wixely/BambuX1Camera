@@ -18,7 +18,8 @@ Protocol facts and observed wire behavior may inform an independently authored i
 ## Current position
 
 - The repository code is independently authored and licensed under MIT.
-- The projects currently declare no third-party NuGet package dependencies.
+- The imaging package declares the temporarily approved `H264Sharp.Decoder` dependency described below.
+- The desktop sample declares Avalonia 12.1.1 and its audited renderer closure under the explicitly approved exception described below.
 - The .NET target framework is supplied by the platform and is not bundled as third-party source in the library package.
 - No Bambu binaries, camera captures, or third-party source files are included.
 
@@ -42,5 +43,14 @@ An exception requires a new explicit user decision that supersedes this policy.
 - Decision: The user explicitly approved using the current package temporarily on 2026-08-24 while H264Sharp's table provenance is corrected.
 - Boundary: This does not permit any other non-MIT dependency, copied source, asset, tool, or generated input.
 - Required follow-up: Upgrade to the corrected H264Sharp release, repeat the dependency audit, update `THIRD-PARTY-NOTICES.md`, and remove this exception before a supported package release.
+- Review date: 2026-09-30
+
+## Approved Avalonia renderer exception
+
+- Components: Google Skia native renderer under BSD-3-Clause and ANGLE Windows native renderer under its BSD-style license and bundled third-party notices.
+- Scope: Native renderer binaries transitively required by Avalonia Desktop 12.1.1 for the Windows and Linux sample application.
+- Decision: The user explicitly approved this narrow exception on 2026-08-24 after the exact Avalonia dependency closure was reported.
+- Boundary: Avalonia's managed packages and the remaining transitive packages must remain MIT-licensed. This exception does not authorize unrelated non-MIT dependencies, source, assets, tools, or generated inputs.
+- Required review: Repeat the complete renderer and transitive-license audit before updating Avalonia or publishing desktop binaries.
 - Review date: 2026-09-30
 

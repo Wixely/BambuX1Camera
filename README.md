@@ -13,11 +13,11 @@ The project is licensed under the [MIT License](LICENSE). Project code must be i
 - Implements RTSPS over `SslStream` on the X1 default port, RTSP Basic and Digest authentication, SDP track discovery, interleaved RTP, H.264 single-NAL, STAP-A, FU-A, and complete access-unit assembly.
 - Uses one RTSP reader to dispatch control responses by `CSeq` while feeding a bounded RTP queue. It acknowledges adaptive `OPTIONS` keepalives and teardown, exposes stream-health metrics, and reconnects established streams with a bounded retry policy.
 - Supports OS certificate validation or a configured SHA-256 certificate pin. The console probe can perform an explicit trust-on-first-use certificate observation without sending credentials, then pin the accepted certificate for the authenticated connection.
-- Includes bounded protocol specifications and an interactive console probe that supports timed tests, optional encoded Annex-B capture, and PNG still capture.
+- Includes bounded protocol specifications, an interactive console probe, and an Avalonia desktop client with secure first-contact certificate pinning, optional encoded settings, and separate connection/viewer pages.
 - A 35-second Windows hardware run against a physical X1C validated TLS pinning, legacy Digest authentication, SDP, setup/playback, six adaptive keepalive acknowledgements, acknowledged teardown, and 901 encoded H.264 NAL units with no observed packet gaps, malformed packets, queue drops, or reconnects. Longer-duration, interruption, restart, and Linux validation remain before the implementation is treated as stable.
 - A subsequent 10-second hardware run validated the access-unit API with 239 complete encoded frames, repeated SPS/PPS-equipped IDR output, normalized presentation times, acknowledged keepalive and teardown, and no observed packet gaps, malformed packets, queue drops, or reconnects.
 - A hardware still-capture run decoded the next IDR through H264Sharp into a structurally and visually validated 1760x1080 PNG, without retaining the private image in the repository.
-- Browser fMP4/WebCodecs delivery, bounded fan-out, the sample viewer, GitHub publishing, and the host plugin contract remain planned.
+- Live desktop decoding, desktop PNG capture, portable publishing, GitHub publishing, and the host plugin contract remain planned.
 
 ## Build and verify
 
@@ -31,6 +31,18 @@ dotnet run --project .\tests\BambuLab.X1Camera.Specs\BambuLab.X1Camera.Specs.csp
 ```
 
 The repository includes VS Code build and debug configuration. The default debug target runs the protocol specifications and never requests printer credentials.
+
+## Desktop application
+
+Start the Avalonia desktop client on Windows or Linux:
+
+```powershell
+dotnet run --project .\samples\BambuLab.X1Camera.Desktop\BambuLab.X1Camera.Desktop.csproj
+```
+
+Enter the printer address and LAN access code. Before sending credentials, the application observes the printer TLS certificate and requires an explicit trust decision if the operating system does not trust it. A successful connection opens a separate viewer page.
+
+Saving is optional. When enabled, the application writes the compatible `bambu-x1-camera.settings.json` file beside its executable. Values are Base64-encoded UTF-8 rather than encrypted; this prevents accidental plaintext disclosure but does not protect against a user or process that can read the file.
 
 ## Probe a printer
 
@@ -127,3 +139,5 @@ Only one reader is permitted per printer session, using either the NAL or access
 This folder is currently a local source project with no remote. It is MIT-licensed, but the GitHub owner, repository visibility, package visibility, and publication timing have not been selected. Do not publish it until those choices are explicit and the pre-push review is complete.
 
 H264Sharp 1.0.2 is MIT-licensed but currently attributes one generated CABAC initialization table to BSD-2-Clause OpenH264. The user approved a narrow temporary exception for that table while H264Sharp's provenance is corrected. This dependency must be upgraded and the exception removed before a supported package release; see [the dependency policy](docs/DEPENDENCY-POLICY.md) and [third-party notices](THIRD-PARTY-NOTICES.md).
+
+Avalonia 12.1.1 is MIT-licensed. Its native Skia and ANGLE renderer closure requires the narrow BSD-family exception approved on 2026-08-24 and recorded in the same policy and notices files.

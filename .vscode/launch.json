@@ -2,6 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": ".NET: Avalonia desktop client",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/samples/BambuLab.X1Camera.Desktop/bin/Debug/net10.0/BambuLab.X1Camera.Desktop.dll",
+      "cwd": "${workspaceFolder}/samples/BambuLab.X1Camera.Desktop/bin/Debug/net10.0",
+      "console": "internalConsole",
+      "stopAtEntry": false
+    },
+    {
       "name": ".NET: protocol specs",
       "type": "coreclr",
       "request": "launch",

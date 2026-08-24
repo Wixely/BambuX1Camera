@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>BambuLab.X1Camera.Desktop</AssemblyName>
+    <RootNamespace>BambuLab.X1Camera.Desktop</RootNamespace>
+    <ApplicationTitle>Bambu X1 Camera</ApplicationTitle>
+    <ApplicationIcon />
+    <PackageId>BambuLab.X1Camera.Desktop</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BambuLab.X1Camera\BambuLab.X1Camera.csproj" />
+  </ItemGroup>
+</Project>

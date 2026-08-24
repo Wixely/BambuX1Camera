@@ -7,6 +7,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\samples\BambuLab.X1Camera.Desktop\BambuLab.X1Camera.Desktop.csproj" />
     <ProjectReference Include="..\..\src\BambuLab.X1Camera\BambuLab.X1Camera.csproj" />
     <ProjectReference Include="..\..\src\BambuLab.X1Camera.Imaging\BambuLab.X1Camera.Imaging.csproj" />
     <ProjectReference Include="..\..\samples\BambuLab.X1Camera.Probe\BambuLab.X1Camera.Probe.csproj" />

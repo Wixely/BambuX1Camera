@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="samples/BambuLab.X1Camera.Desktop/BambuLab.X1Camera.Desktop.csproj" />
   <Project Path="samples/BambuLab.X1Camera.Probe/BambuLab.X1Camera.Probe.csproj" />
   <Project Path="src/BambuLab.X1Camera.Imaging/BambuLab.X1Camera.Imaging.csproj" />
   <Project Path="src/BambuLab.X1Camera/BambuLab.X1Camera.csproj" />
