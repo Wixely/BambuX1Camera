@@ -78,7 +78,7 @@ jobs:
     needs: verify
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -188,3 +188,100 @@ jobs:
                   --api-key $env:GITHUB_TOKEN `
                   --skip-duplicate
           }
+
+      - name: Prepare standalone desktop release assets
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $tagVersion = $env:GITHUB_REF_NAME.Substring(1)
+          ./scripts/Prepare-DesktopRelease.ps1 -Version $tagVersion
+
+      - name: Create GitHub prerelease and upload desktop assets
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $PSNativeCommandUseErrorActionPreference = $true
+          $tagName = $env:GITHUB_REF_NAME
+          $tagVersion = $tagName.Substring(1)
+          $apiRoot = "https://api.github.com/repos/$env:GITHUB_REPOSITORY"
+          $headers = @{
+              Accept = "application/vnd.github+json"
+              Authorization = "Bearer $env:GITHUB_TOKEN"
+              "X-GitHub-Api-Version" = "2022-11-28"
+              "User-Agent" = "BambuX1Camera-release-workflow"
+          }
+          $releaseBody = @'
+          This prerelease publishes the reusable `BambuLab.X1Camera` and
+          `BambuLab.X1Camera.Imaging` NuGet packages plus the Avalonia sample application.
+
+          The desktop downloads are self-contained, standalone single-file executables:
+
+          - Windows x64: download the `.exe` and run it directly.
+          - Linux x64: download the extensionless binary, run `chmod +x` on it, then launch it from a graphical X11 or XWayland desktop.
+
+          Avalonia is used only by the sample application and is not a dependency of either NuGet package. Required project and native-renderer notices are provided in the separate notices archive. Verify downloads with `SHA256SUMS.txt`.
+          '@
+          $releasePayload = @{
+              tag_name = $tagName
+              target_commitish = $env:GITHUB_SHA
+              name = $tagName
+              body = $releaseBody
+              draft = $false
+              prerelease = $true
+              generate_release_notes = $true
+              make_latest = "false"
+          } | ConvertTo-Json
+
+          $encodedTag = [Uri]::EscapeDataString($tagName)
+          try {
+              $release = Invoke-RestMethod `
+                  -Method Get `
+                  -Uri "$apiRoot/releases/tags/$encodedTag" `
+                  -Headers $headers
+          }
+          catch {
+              $statusCode = [int]$_.Exception.Response.StatusCode
+              if ($statusCode -ne 404) {
+                  throw
+              }
+
+              $release = Invoke-RestMethod `
+                  -Method Post `
+                  -Uri "$apiRoot/releases" `
+                  -Headers $headers `
+                  -ContentType "application/json" `
+                  -Body $releasePayload
+          }
+
+          $assetDirectory = Join-Path $env:GITHUB_WORKSPACE "artifacts/release/$tagVersion"
+          $assets = @(Get-ChildItem -LiteralPath $assetDirectory -File | Sort-Object Name)
+          if ($assets.Count -ne 4) {
+              throw "Expected four release assets, found $($assets.Count)."
+          }
+
+          $uploadRoot = $release.upload_url -replace '\{\?name,label\}$', ''
+          foreach ($asset in $assets) {
+              $existingAsset = @($release.assets | Where-Object { $_.name -eq $asset.Name }) |
+                  Select-Object -First 1
+              if ($existingAsset) {
+                  Invoke-RestMethod `
+                      -Method Delete `
+                      -Uri "$apiRoot/releases/assets/$($existingAsset.id)" `
+                      -Headers $headers | Out-Null
+              }
+
+              $contentType = switch ($asset.Extension) {
+                  ".zip" { "application/zip" }
+                  ".txt" { "text/plain" }
+                  default { "application/octet-stream" }
+              }
+              $assetName = [Uri]::EscapeDataString($asset.Name)
+              Invoke-RestMethod `
+                  -Method Post `
+                  -Uri "${uploadRoot}?name=$assetName" `
+                  -Headers $headers `
+                  -ContentType $contentType `
+                  -InFile $asset.FullName | Out-Null

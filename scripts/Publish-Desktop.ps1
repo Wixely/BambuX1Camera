@@ -32,6 +32,7 @@ foreach ($runtime in $RuntimeIdentifier) {
         --configuration Release `
         --runtime $runtime `
         --self-contained true `
+        -p:ContinuousIntegrationBuild=true `
         --output $outputPath
     if ($LASTEXITCODE -ne 0) {
         throw "Desktop publish failed for $runtime."
