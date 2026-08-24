@@ -48,7 +48,7 @@ The audited managed Avalonia closure is `Avalonia`, `Avalonia.BuildServices` 11.
 - Purpose: Text shaping and hardware/software rendering required by Avalonia Desktop.
 - Reviewed: 2026-08-24
 
-SkiaSharp and HarfBuzzSharp's .NET bindings are MIT-licensed. The native Google Skia renderer is BSD-3-Clause. ANGLE is distributed under a BSD-style license and carries notices for its bundled third-party components. The user explicitly approved this narrow native-renderer exception on 2026-08-24. Redistributed desktop binaries must preserve all license and third-party notices supplied by these packages. Repeat this audit before updating any listed version.
+SkiaSharp and HarfBuzzSharp's .NET bindings are MIT-licensed. The native Google Skia renderer is BSD-3-Clause and is admitted under the repository's general BSD-3-Clause policy approved on 2026-08-24. ANGLE is distributed under a BSD-style license and carries notices for its bundled third-party components; its previously approved narrow exception remains in force until every applicable license in that closure is classified independently. Redistributed desktop binaries must preserve all license and third-party notices supplied by these packages. Repeat this audit before updating any listed version.
 
 The project targets the .NET platform but does not redistribute its source as part of the library package.
 

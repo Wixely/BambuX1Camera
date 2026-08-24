@@ -9,7 +9,7 @@
 
 Produce a reusable .NET library that connects directly to a Bambu Lab X1 Carbon camera with the printer's LAN access code, provides still images and live video without Bambu's proprietary Windows DLLs, can be embedded behind a plugin boundary, and is distributed as versioned NuGet packages through GitHub Packages. Include a basic viewer application that demonstrates the supported APIs without becoming a second production product.
 
-The project and all independently authored code are MIT-licensed. Implementation code, dependencies, transitive dependencies, assets, packaged tools, and workflow actions must be MIT-licensed, independently authored, or covered by a narrowly recorded user-approved exception. Non-MIT implementation code must not be copied or adapted; protocol facts may only inform a separately authored implementation.
+The project and all independently authored code are MIT-licensed. Implementation code, dependencies, transitive dependencies, assets, packaged tools, and workflow actions must be MIT-licensed, BSD-3-Clause-licensed, independently authored, or covered by a narrowly recorded user-approved exception. Implementation code under any other license must not be copied or adapted without explicit approval; protocol facts may only inform a separately authored implementation.
 
 ## Confirmed requirements
 
@@ -21,7 +21,7 @@ The project and all independently authored code are MIT-licensed. Implementation
 - Produce installable, versioned packages through GitHub Packages.
 - Include a sample viewer application.
 - License the project under MIT.
-- Use only independently authored or MIT-licensed implementation code and dependencies, including the complete transitive dependency graph, except for narrowly recorded sample-only renderer exceptions.
+- Use only independently authored, MIT-licensed, or BSD-3-Clause-licensed implementation code and dependencies, including the complete transitive dependency graph, except for narrowly recorded sample-only renderer exceptions.
 - The diagnostic console probe may optionally save the printer address, access code, and certificate pin as Base64-encoded UTF-8 in ignored JSON beside its executable. Saving must be opt-in and clearly identified as reversible encoding rather than encryption. Confirmed by the user on 2026-08-24.
 
 ## Proposed architecture
@@ -103,7 +103,7 @@ The viewer should provide:
 - Publish the public repository as `Wixely/BambuX1Camera` and use the package identifiers `BambuLab.X1Camera` and `BambuLab.X1Camera.Imaging`.
 - Build deterministic `.nupkg` and symbol packages with README, XML documentation, repository metadata, Source Link, and dependency/license notices.
 - Publish every package with the SPDX license expression `MIT` and include the repository's dependency notices.
-- Reject any direct or transitive dependency, vendored asset, packaged tool, generated source input, or workflow action that is not verified as MIT-licensed or covered by a narrowly recorded user-approved exception.
+- Reject any direct or transitive dependency, vendored asset, packaged tool, generated source input, or workflow action that is not verified as MIT-licensed, BSD-3-Clause-licensed, or covered by a narrowly recorded user-approved exception.
 - Use semantic prerelease versions until the X1C hardware matrix and public API are stable.
 - Run build and protocol tests on Windows and Linux for every pull request and release candidate.
 - On an approved version tag, build once, retain the packages as workflow artifacts, and publish the exact verified files to GitHub Packages using scoped workflow permissions.
@@ -148,10 +148,10 @@ The viewer should provide:
 
 ### 0.5 - Package release
 
-- [x] License the project under MIT and adopt an MIT-only/self-authored source policy. - Owner: user
+- [x] License independently authored project code under MIT and adopt an MIT/BSD-3-Clause/self-authored source policy. - Owner: user
 - [x] Select `Wixely/BambuX1Camera` as the public source repository, publish associated packages publicly, and retain the package identifiers `BambuLab.X1Camera` and `BambuLab.X1Camera.Imaging`. - Owner: user
 - [x] Add a least-privilege GitHub Actions workflow that verifies Windows/Linux and publishes tagged packages without third-party action dependencies. - Owner: agent
-- [x] Audit every direct and transitive dependency, asset, packaged tool, generated source input, and workflow action against the dependency policy and recorded exceptions. The release audit was repeated on 2026-08-24; all package declarations are MIT except the previously approved Avalonia native-renderer exception, and the independently authored workflow has no external action dependencies. - Owner: agent
+- [x] Audit every direct and transitive dependency, asset, packaged tool, generated source input, and workflow action against the dependency policy and recorded exceptions. The release audit was repeated on 2026-08-24; all package declarations are MIT, Google Skia is BSD-3-Clause, the ANGLE closure retains its previously approved narrow exception, and the independently authored workflow has no external action dependencies. - Owner: agent
 - [ ] Complete Windows/Linux consumer installation and physical-X1C release tests. - Owner: TBD
 - [x] Complete privacy, binary provenance, license, package-content, and outgoing-history review before the first push. The 2026-08-24 review covered every reachable commit and path, all three image/icon binaries and their metadata, package archives and symbols, commit identities/messages, file modes, ignored outputs, and credential/private-configuration patterns. - Owner: agent
 - [ ] Publish the approved prerelease packages and verify installation from GitHub Packages. - Owner: TBD
@@ -163,7 +163,7 @@ The viewer should provide:
 - The public still-image API returns a valid JPEG or PNG and clearly reports when the selected runtime has no decoder capability.
 - The sample viewer displays video, captures a still, never persists the access code by default, and runs on verified Windows and Linux configurations.
 - Core transport packages contain no proprietary Bambu binaries, platform-specific decoder binaries, credentials, captures, or private device metadata.
-- Every shipped code component, direct and transitive dependency, asset, packaged tool, and workflow action is independently authored, has verified MIT license evidence, or is covered by a narrowly recorded approval in `THIRD-PARTY-NOTICES.md`.
+- Every shipped code component, direct and transitive dependency, asset, packaged tool, and workflow action is independently authored, has verified MIT or BSD-3-Clause license evidence, or is covered by a narrowly recorded approval in `THIRD-PARTY-NOTICES.md`.
 - Certificate rejection, invalid credentials, malformed SDP/RTP, packet loss, cancellation, printer restart, and viewer churn are covered by automated or documented physical tests.
 - Package versions, repository metadata, symbols, documentation, license notices, and release notes correspond to the exact tested source revision.
 

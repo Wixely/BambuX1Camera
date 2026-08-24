@@ -6,7 +6,7 @@ The core library does not use `bambu_networking.dll`, DirectShow, Media Foundati
 
 The Avalonia desktop viewer and console probe are sample applications that demonstrate how a host can consume these packages. They are not the primary product and Avalonia is not required by applications using either NuGet package. See the [project plan](docs/PROJECT-PLAN.md) for the architecture, milestones, acceptance criteria, and unresolved release choices.
 
-The project is licensed under the [MIT License](LICENSE). Project code must be independently authored or sourced from MIT-licensed code; the Avalonia sample's native renderer closure is the only separately recorded dependency-policy exception. See the [dependency and source policy](docs/DEPENDENCY-POLICY.md).
+The project is licensed under the [MIT License](LICENSE). Independently authored project code remains MIT-licensed; third-party code and dependencies may use MIT or BSD-3-Clause. The Avalonia sample's ANGLE renderer closure is the only separately recorded dependency-policy exception. See the [dependency and source policy](docs/DEPENDENCY-POLICY.md).
 
 ## Project layout and dependency boundary
 
@@ -200,4 +200,4 @@ The source repository and associated packages are published publicly under `Wixe
 
 H264Sharp 1.0.2 is MIT-licensed. Its third-party notice preserves a precautionary BSD-2-Clause attribution for CABAC context-initialization values transcribed through OpenH264, while also stating that H.264 specification formulas and lookup tables are not subject to third-party copyright. The [current H264Sharp README](https://github.com/Wixely/H264Sharp#licensing) further clarifies that these values are mandated by ITU-T H.264 Tables 9-12 through 9-24 and that the precautionary attribution does not change the project's MIT licensing. This repository retains the attribution in [third-party notices](THIRD-PARTY-NOTICES.md).
 
-Avalonia 12.1.1 is MIT-licensed and is used only by the non-packable desktop sample. Its native Skia and ANGLE renderer closure requires the narrow BSD-family exception approved on 2026-08-24 and recorded in the same policy and notices files. Those renderer dependencies are distributed with the portable sample builds, not with either NuGet library package.
+Avalonia 12.1.1 is MIT-licensed and is used only by the non-packable desktop sample. Its native Skia renderer is admitted under the repository's BSD-3-Clause policy. ANGLE and its bundled third-party closure retain the narrow exception approved on 2026-08-24 and recorded in the same policy and notices files. Those renderer dependencies are distributed with the portable sample builds, not with either NuGet library package.
