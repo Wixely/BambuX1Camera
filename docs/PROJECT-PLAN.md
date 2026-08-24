@@ -130,7 +130,7 @@ The viewer should provide:
 
 - [x] Add `CSeq` response dispatch, bounded interleaved-frame buffering, adaptive acknowledged keepalive/teardown, stream-health metrics, and bounded reconnect policy. - Owner: agent
 - [x] Add bounded access-unit assembly, SPS/PPS handling, timestamp normalization, and discontinuity signaling. A 10-second Windows hardware run on 2026-08-24 emitted 239 complete access units with repeated parameter-set-equipped IDRs and no observed transport discontinuity. - Owner: agent
-- [ ] Add bounded fan-out. - Owner: TBD
+- [x] Add single-session bounded fan-out with independent slow-consumer dropping and PNG capture subscriptions. - Owner: agent
 - [ ] Implement managed fragmented-MP4 remuxing without transcoding. - Owner: TBD
 - [ ] Prove 30-minute playback and repeated viewer connections on Windows and Linux browsers. - Owner: TBD
 

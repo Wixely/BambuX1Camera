@@ -96,7 +96,23 @@ await File.WriteAllBytesAsync("still.png", image.Data, cancellationToken);
 
 `CapturePngAsync` owns the session's single reader until it returns. Applications that need simultaneous still capture and live forwarding should read `ReadAccessUnitsAsync` once, fan out through bounded application queues, and pass a keyframe to `X1CameraPngDecoder.Decode`.
 
-Only one reader is permitted per printer session, using either the NAL or access-unit API. Access units are bounded, carry normalized presentation time across normal 32-bit RTP wraparound, and flag discontinuities so a decoder or restreamer can reset and wait for a keyframe. `Metrics` is a thread-safe snapshot containing packet gaps, malformed or unexpected packets, bounded-queue drops, NAL output, reconnects, and acknowledged lifecycle requests. A plugin host should maintain one connection and fan out bounded copies or references to authorized consumers.
+The built-in fan-out hub provides that single-reader pattern:
+
+```csharp
+await using var hub = new X1CameraAccessUnitHub(session);
+await using var video = hub.Subscribe(capacity: 8);
+await using var still = hub.Subscribe(capacity: 2);
+
+var image = await still.CapturePngAsync(cancellationToken);
+await foreach (var accessUnit in video.ReadAllAsync(cancellationToken))
+{
+    // Forward or decode accessUnit.AnnexBData.
+}
+```
+
+Each subscriber has an independent bounded queue and `DroppedAccessUnits` counter. A slow consumer drops its oldest queued frames without delaying the printer reader or other consumers.
+
+Only one reader is permitted per printer session, using either the NAL or access-unit API. Access units are bounded, carry normalized presentation time across normal 32-bit RTP wraparound, and flag discontinuities so a decoder or restreamer can reset and wait for a keyframe. `Metrics` is a thread-safe snapshot containing packet gaps, malformed or unexpected packets, bounded-queue drops, NAL output, reconnects, and acknowledged lifecycle requests. A plugin host should maintain one connection and use `X1CameraAccessUnitHub` for bounded consumers.
 
 ## Security
 

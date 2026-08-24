@@ -18,6 +18,7 @@ var specifications = new (string Name, Func<Task> Run)[]
     ("access-unit timestamps handle RTP wraparound", AccessUnitTimestampsHandleWraparound),
     ("access-unit assembly is bounded and recovers", AccessUnitAssemblyIsBounded),
     ("H264Sharp still decoder produces a valid PNG", H264SharpStillDecoderProducesPng),
+    ("access-unit fan-out isolates slow bounded consumers", AccessUnitFanOutIsBounded),
     ("SDP parser discovers the H264 video track", SdpParserDiscoversH264Track),
     ("RTSP wire reader separates responses and interleaved frames", RtspWireReaderSeparatesFrames),
     ("digest authentication does not disclose the access code", DigestAuthenticationDoesNotDiscloseAccessCode),
@@ -205,6 +206,56 @@ static Task H264SharpStillDecoderProducesPng()
     AssertEx.Equal(16, BinaryPrimitives.ReadInt32BigEndian(image.Data.Span.Slice(16, 4)));
     AssertEx.Equal(16, BinaryPrimitives.ReadInt32BigEndian(image.Data.Span.Slice(20, 4)));
     return Task.CompletedTask;
+}
+
+static async Task AccessUnitFanOutIsBounded()
+{
+    var scriptedStream = new ScriptedDuplexStream(_ => { });
+    var options = new X1CameraOptions("printer.example", "test-code")
+    {
+        KeepAliveInterval = TimeSpan.Zero,
+        ReconnectAttempts = 0,
+        TeardownTimeout = TimeSpan.FromMilliseconds(20)
+    };
+    var state = CreateConnectionStateForStream(scriptedStream);
+    await using var session = new X1CameraSession(
+        options,
+        state,
+        _ => ValueTask.FromException<X1CameraConnectionState>(new IOException("No replacement expected.")));
+    await using var hub = new X1CameraAccessUnitHub(session);
+    await using var fast = hub.Subscribe(capacity: 4);
+    await using var slow = hub.Subscribe(capacity: 1);
+
+    var fastReader = fast.ReadAllAsync().GetAsyncEnumerator();
+    try
+    {
+        for (ushort sequence = 1; sequence <= 3; sequence++)
+        {
+            scriptedStream.QueueIncoming(CreateInterleavedRtpStream(
+                CreateRtpPacketBytes(sequence, (uint)(sequence * 100), true, [0x61, (byte)sequence])));
+        }
+
+        for (var expectedTimestamp = 100u; expectedTimestamp <= 300; expectedTimestamp += 100)
+        {
+            AssertEx.True(await fastReader.MoveNextAsync());
+            AssertEx.Equal(expectedTimestamp, fastReader.Current.RtpTimestamp);
+        }
+
+        var deadline = DateTime.UtcNow.AddSeconds(1);
+        while (slow.DroppedAccessUnits < 2 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(10);
+        }
+
+        AssertEx.Equal(2L, slow.DroppedAccessUnits);
+        await using var slowReader = slow.ReadAllAsync().GetAsyncEnumerator();
+        AssertEx.True(await slowReader.MoveNextAsync());
+        AssertEx.Equal((uint)300, slowReader.Current.RtpTimestamp);
+    }
+    finally
+    {
+        await fastReader.DisposeAsync();
+    }
 }
 
 static Task SdpParserDiscoversH264Track()
@@ -520,6 +571,18 @@ static RtpPacket ParseRtp(ushort sequence, uint timestamp, bool marker, byte[] p
     var bytes = CreateRtpPacketBytes(sequence, timestamp, marker, payload);
     AssertEx.True(RtpPacket.TryParse(bytes, out var packet));
     return packet;
+}
+
+static X1CameraConnectionState CreateConnectionStateForStream(Stream stream)
+{
+    var connection = RtspConnection.CreateForStream(stream);
+    var track = new SdpVideoTrack(96, 90_000, "track1", null, null);
+    return new X1CameraConnectionState(
+        connection,
+        new Uri("rtsps://printer.example:322/streaming/live/1"),
+        "test-session",
+        null,
+        track);
 }
 
 static H264NalUnit CreateNal(uint timestamp, ushort sequence, bool marker, byte[] payload)
