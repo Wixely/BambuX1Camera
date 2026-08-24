@@ -34,7 +34,7 @@ Avalonia is used only by the desktop sample application. It is not referenced by
 
 ## Install the packages
 
-The latest prerelease is `0.1.0-alpha.2`. Both packages are published from approved `v*` tags to Wixely's GitHub Packages NuGet feed:
+The latest prerelease is `0.1.0-alpha.3`. Both packages are published from approved `v*` tags to Wixely's GitHub Packages NuGet feed:
 
 ```powershell
 dotnet nuget add source "https://nuget.pkg.github.com/Wixely/index.json" `
@@ -43,8 +43,8 @@ dotnet nuget add source "https://nuget.pkg.github.com/Wixely/index.json" `
     --password $env:GITHUB_PACKAGES_TOKEN `
     --store-password-in-clear-text
 
-dotnet add package BambuLab.X1Camera --version 0.1.0-alpha.2
-dotnet add package BambuLab.X1Camera.Imaging --version 0.1.0-alpha.2
+dotnet add package BambuLab.X1Camera --version 0.1.0-alpha.3
+dotnet add package BambuLab.X1Camera.Imaging --version 0.1.0-alpha.3
 ```
 
 GitHub requires authentication for NuGet package downloads, including public packages. Use a classic personal access token with `read:packages`, keep it outside the repository, and clear the environment variable after configuring the user-level NuGet credentials. Applications that only need encoded H.264 should install the core package; install the imaging package when RGB24 or PNG decoding is required. Neither package depends on Avalonia.
