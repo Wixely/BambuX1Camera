@@ -5,7 +5,7 @@
     <RootNamespace>BambuLab.X1Camera.Imaging</RootNamespace>
     <Description>Managed H.264 video and PNG still-image decoding for BambuLab.X1Camera.</Description>
     <PackageId>BambuLab.X1Camera.Imaging</PackageId>
-    <Version>0.1.0-alpha.3</Version>
+    <Version>0.1.0-alpha.4</Version>
     <Authors>Wixely</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
