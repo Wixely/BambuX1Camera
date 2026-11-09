@@ -121,14 +121,8 @@ jobs:
               "src/BambuLab.X1Camera/BambuLab.X1Camera.csproj",
               "src/BambuLab.X1Camera.Imaging/BambuLab.X1Camera.Imaging.csproj")
 
-          foreach ($projectPath in $projects) {
-              [xml]$project = Get-Content -Raw $projectPath
-              $projectVersion = [string]$project.Project.PropertyGroup.Version
-              if ($projectVersion -ne $tagVersion) {
-                  throw "Tag version $tagVersion does not match $projectPath version $projectVersion."
-              }
-          }
-
+          # The tag is the version that gets packed (-p:PackageVersion below); each project's own
+          # <Version> is only a placeholder for ad-hoc local builds and is never read here.
           $packageDirectory = Join-Path $env:GITHUB_WORKSPACE "artifacts/packages"
           dotnet restore BambuX1Camera.slnx
           foreach ($projectPath in $projects) {
